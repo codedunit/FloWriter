@@ -44,6 +44,7 @@ def build():
     (DIST / 'index.html').write_text(page, encoding='utf-8')
     for f in ['schema.sql', 'config.example.js', 'SETUP.md'] + (['config.js'] if has_config else []):
         if (ROOT / f).exists(): shutil.copy(ROOT / f, DIST / f)
+    shutil.copytree(SRC / 'photos', DIST / 'photos', dirs_exist_ok=True)  # team photos on the homepage
     print(f'dist/index.html {len(page) // 1024} KB' + (' (with config.js)' if has_config else ' (demo data until config.js is added)'))
 
 if __name__ == '__main__':

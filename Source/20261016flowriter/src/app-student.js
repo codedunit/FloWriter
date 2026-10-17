@@ -53,17 +53,27 @@ route('lesson', { auth: 'student', nav: 'home', title: q => (lessonById(q.get('i
   return lessonPage(l, { back: 'home' });
 }, () => lessonAfter({}));
 
-function trackerSteps(p, l, compact){
-  const s = (n, cls, title, sub) => `<div class="tstep ${cls}"><span class="n">${cls === 'done' ? IC.check : cls === 'lock' ? IC.lock : n}</span><span><b>${title}</b><small>${sub}</small></span></div>`;
-  if (isCheck(l)) return s(1, p.test ? 'done' : 'now', 'Handwriting check', p.test ? `Score ${pct(p.test.score)}` : 'No music, no demo, one try. Write as neatly as you can.');
-  const now = !p.demo ? 1 : !p.practice ? 2 : !p.test ? 3 : 0;
-  return s(1, p.demo ? 'done' : now === 1 ? 'now' : '', 'Watch the demo', p.demo ? `Watched ${p.demo}×` : 'Start here, as often as you like')
-    + s(2, p.practice ? 'done' : now === 2 ? 'now' : 'lock', 'Practice with the music', p.practice ? `${p.practice} run${p.practice > 1 ? 's' : ''} · best ${pct(p.bestPractice)}` : p.demo ? 'The music waits for you' : 'Opens after the demo')
-    + s(3, p.test ? 'done' : now === 3 ? 'now' : 'lock', 'Take the test', p.test ? `Score ${pct(p.test.score)}` : p.practice ? 'No music · one try' : 'Opens after practice');
+// live: the steps are the lesson's controls (buttons that drive the engine); open: every step is unlocked (tryout, preview)
+function trackerSteps(p, l, compact, live, open){
+  const s = (n, cls, title, sub, mode) => { const inner = `<span class="n">${cls === 'done' ? IC.check : cls === 'lock' ? IC.lock : n}</span><span><b>${title}</b><small>${sub}</small></span>`;
+    return live ? `<button type="button" class="tstep ${cls}" data-act="mode" data-mode="${mode}">${inner}</button>` : `<div class="tstep ${cls}">${inner}</div>`; };
+  if (isCheck(l)) return s(1, p.test ? 'done' : 'now', 'Handwriting check', p.test ? `Score ${pct(p.test.score)}` : 'No music, no demo, one try. Write as neatly as you can.', 'test');
+  const now = !p.demo ? 1 : !p.practice ? 2 : !p.test ? 3 : 0, lock = open ? '' : 'lock';
+  return s(1, p.demo ? 'done' : now === 1 ? 'now' : '', 'Watch the demo', p.demo ? `Watched ${p.demo}×` : 'Start here, as often as you like', 'demo')
+    + s(2, p.practice ? 'done' : now === 2 ? 'now' : lock, 'Practice with the music', p.practice ? `${p.practice} run${p.practice > 1 ? 's' : ''} · best ${pct(p.bestPractice)}` : p.demo || open ? 'The music waits for you' : 'Opens after the demo', 'practice')
+    + s(3, p.test ? 'done' : now === 3 ? 'now' : lock, 'Take the test', p.test ? `Score ${pct(p.test.score)}` : p.practice || open ? 'No music · one try' : 'Opens after practice', 'test');
 }
+// mirror what the engine says each step can do right now (locked, running, "tap again" before the test)
+function paintModes(){
+  const M = state.launch && state.launch.modes; if (!M) return;
+  $$('#tracker [data-mode]').forEach(b => { const m = M[b.dataset.mode]; if (!m) return; b.disabled = m.off; b.classList.toggle('running', m.run);
+    if (b.dataset.mode === 'test' && M.confirm) { b.querySelector('b').textContent = 'Start the test?'; b.querySelector('small').textContent = 'You only get one try. Tap again to start.'; } });
+}
+// clicked synchronously so the tap still counts as the user gesture that lets the engine start audio (iPad)
+ACT.mode = t => { const id = { demo: 'demoBtn', practice: 'pracBtn', test: 'testBtn' }[t.dataset.mode], b = $('#engineWrap iframe')?.contentDocument?.getElementById(id); if (b && !b.disabled) b.click(); };
 function lessonPage(l, { guest, preview, back } = {}){
   const s = songById(l.songId), bpm = Math.round((s ? s.bpm : 84) * l.mult * 10) / 10, c = classById(l.classId);
-  state.launch = { ...(state.launch || {}), lesson: l, guest, preview, back, local: { demo: 0, practice: 0, test: null, bestPractice: 0 } };
+  state.launch = { ...(state.launch || {}), lesson: l, guest, preview, back, modes: null, local: { demo: 0, practice: 0, test: null, bestPractice: 0 } };
   const theme = THEMES.find(t => t.id === l.theme) || THEMES[0];
   return `<a class="crumbs" href="#/${back || (guest ? '' : 'home')}" style="text-decoration:none">${IC.back.replace('<svg', '<svg style="width:16px;height:16px"')} ${guest ? 'Back to FloWriter' : preview ? 'Back' : 'My lessons'}</a>
   <div class="lesson-head"><div><p class="eyebrow">${guest ? 'Try a lesson' : preview ? 'Student preview' : esc(c ? c.name : 'Lesson')}</p><h1>${esc(l.title)}</h1></div>
@@ -81,7 +91,7 @@ function lessonProgress(){
 }
 function paintTracker(){
   const L = state.launch, p = lessonProgress(), el = $('#tracker'); if (!el) return;
-  el.innerHTML = trackerSteps(p, L.lesson);
+  el.innerHTML = trackerSteps(p, L.lesson, false, true, L.guest || L.preview); paintModes();
   const box = $('#doneBox');
   if (box) box.innerHTML = p.test ? `<div class="banner ok"><span class="big">${pct(p.test.score)}</span><div style="flex:1;min-width:200px"><b>${L.guest || L.preview ? 'Test scored.' : 'Lesson complete!'}</b> <span class="note">${p.test.valid} of ${p.test.total} strokes on the line${p.test.reversed ? ` · ${p.test.reversed} drawn backwards` : ''}. ${L.guest || L.preview ? '' : 'You can keep watching and practicing.'}</span></div>
     ${p.test.letters && p.test.letters.some(x => x.score < .9) ? `<div class="row" style="gap:6px"><span class="note" style="font-weight:800">Practice these:</span>${p.test.letters.filter(x => x.score < .9).sort((a, b) => a.score - b.score).slice(0, 3).map(x => `<span class="pill ${x.score < .7 ? 'bad' : 'blue'}" style="font-size:15px">${esc(x.ch)} ${pct(x.score)}</span>`).join('')}</div>` : ''}</div>` : '';
@@ -95,6 +105,7 @@ function lessonAfter(){
   mountEngine($('#engineWrap'), { word: cleanText(l.text), title: l.title, bps: l.bps || 1, rest: l.rest ?? 1, tol: DIFF[l.difficulty || 'standard'].tol, skin: l.theme || '', role, checkOnly: isCheck(l),
     progress: role === 'preview' ? { demo: 1, practice: 1 } : { demo: p.demo, practice: p.practice, test: p.test ? { score: p.test.score, valid: p.test.valid, total: p.test.total } : null } }, song, l.mult || 1, m => {
     if (m.type === 'active') { active += 5; return; }
+    if (m.type === 'modes') { L.modes = m; paintModes(); return; }
     if (m.type !== 'run') return;
     const wall = (Date.now() - lastAt) / 1000; lastAt = Date.now();
     const seconds = Math.round(m.mode === 'demo' ? Math.min(150, wall) : Math.max(5, Math.min(wall, active + 5))); active = 0;

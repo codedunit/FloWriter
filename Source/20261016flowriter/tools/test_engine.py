@@ -107,6 +107,21 @@ with sync_playwright() as p:
     run, st, fr = run_test('a o d g', reverse=True)
     check('closed shapes traced backward are flagged', st.count('reversed') >= len(st) - 2, str(st))
 
+    # ---- 4b. wrong direction while writing: practice waits when the pen starts at the far end, and backwards ink is flagged at once
+    _, fr = load({'word': 'hello', 'progress': {'demo': 1}})
+    fr.evaluate("pracBtn.click()")
+    fr.evaluate("""(()=>{ const F=__fw, S=F.S, cv=document.getElementById('pad'), r=cv.getBoundingClientRect(), p=S.strokes[0].pts.at(-1);
+      cv.dispatchEvent(new PointerEvent('pointerdown',{clientX:r.left+F.X(p[0]),clientY:r.top+F.Y(p[1]),pointerId:1,bubbles:true,pointerType:'pen',pressure:.5})); })()""")
+    pg.wait_for_timeout(3600)  # past the 4-beat count-in at 84 BPM
+    held = fr.evaluate("__fw.S.beat < __fw.S.strokes[0].b0")
+    fr.evaluate("""(()=>{ const F=__fw, S=F.S, cv=document.getElementById('pad'), r=cv.getBoundingClientRect();
+      S.strokes[0].pts.slice().reverse().forEach(p=>cv.dispatchEvent(new PointerEvent('pointermove',{clientX:r.left+F.X(p[0]),clientY:r.top+F.Y(p[1]),pointerId:1,bubbles:true,pointerType:'pen',pressure:.5}))); })()""")
+    live = fr.evaluate("[__fw.S.points.filter(p=>p.back).length, __fw.S.points.length, document.getElementById('hudPenTxt').textContent]")
+    check('practice waits when the pen starts at the end of a stroke', held, str(held))
+    check('backwards ink is flagged while writing', live[0] > live[1] * .5 and 'Wrong way' in live[2], str(live))
+    run, st, fr = run_test('rr fox')  # short: a synthetic trace redraws all ink per event, so long text is slow here
+    check('forward writing is never flagged live', fr.evaluate("__fw.S.points.filter(p=>p.back).length") == 0 and 'reversed' not in st, str(st))
+
     # ---- 5. one test only: after submitting, the test button is done
     _, fr = load({'word': 'cat', 'progress': {'demo': 1, 'practice': 2, 'test': {'score': .82}}})
     t = fr.evaluate("[testBtn.disabled, document.getElementById('testTitle').textContent, document.getElementById('testMd').textContent]")

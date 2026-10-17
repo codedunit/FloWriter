@@ -90,8 +90,9 @@ address the cards were printed from, so print cards from the real site.
 ## Homepage content
 
 `src/site.js`: the video (`.mp4` or YouTube link), team, about, the states
-statistic and its source, contact email, privacy-page retention text. Rebuild
-after editing.
+statistic and its source, contact email, privacy-page retention text. Team
+photos and the group photo live in `src/photos/` (the build copies them to
+`dist/photos/`). Rebuild after editing.
 
 ## Data
 
@@ -105,7 +106,7 @@ after editing.
 ## Tests
 
 ```
-python3 tools/test_engine.py      # tracing engine (19 checks)
+python3 tools/test_engine.py      # tracing engine (22 checks)
 python3 tools/test_app.py         # teacher -> student -> teacher flow (23)
 python3 tools/test_pilot.py       # pilot features (29)
 python3 tools/test_backend.py     # Supabase adapter against a fake client (18)

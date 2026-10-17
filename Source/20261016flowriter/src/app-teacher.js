@@ -116,7 +116,7 @@ function classHeader(c, tab){
   const kids = classStudents(c.id), ls = lessonsForClass(c.id);
   const t = (k, l) => `<a href="#/class?id=${c.id}&tab=${k}" ${tab === k ? 'aria-current="page"' : ''}>${l}</a>`;
   return `<nav class="crumbs" aria-label="Breadcrumb"><a href="#/classes">Classes</a><span>›</span><span style="color:var(--ink)">${esc(c.name)}</span></nav>
-  <div class="page-title"><div class="row"><h1>${esc(c.name)}</h1><button class="icon-btn" type="button" data-act="class-settings" data-id="${c.id}" aria-label="Class settings">${IC.gear}</button>${c.archived ? '<span class="pill">Archived</span>' : ''}</div>
+  <div class="page-title"><div class="row"><h1>${esc(c.name)}</h1><button class="icon-btn" type="button" data-act="class-settings" data-id="${c.id}" aria-label="Edit class settings" title="Edit class settings">${IC.edit}</button>${c.archived ? '<span class="pill">Archived</span>' : ''}</div>
     <div class="row"><div style="text-align:right"><div class="note" style="font-weight:800">Class join code</div><button type="button" class="btn ghost mono" style="padding:2px 0;font-size:18px;letter-spacing:.12em;color:var(--blue-ink)" data-act="copy-code" data-code="${esc(c.code)}">${IC.copy}${esc(c.code)}</button></div>
     <button class="btn" type="button" data-act="join-sheet" data-id="${c.id}">${IC.link} Invite students</button><a class="btn primary" href="#/lesson-edit?class=${c.id}">${IC.plus} New lesson</a></div></div>
   <nav class="tabs" aria-label="Class sections">${t('overview', 'Overview')}${t('students', `Students (${kids.length})`)}${t('lessons', `Lessons (${ls.length})`)}${t('checks', 'Handwriting checks')}${t('letters', 'Letters')}</nav>`;
