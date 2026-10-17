@@ -5,10 +5,11 @@
 dist/index.html           the site. Host this folder (with config.js) for the pilot.
 dist/config.example.js    copy to dist/config.js (or put config.js next to build.py and rebuild)
 dist/flowriter-demo.html  the same app as a page fragment, for previews (demo data only)
+netlify-drop.zip          just what the live site needs; drag it onto your Netlify site's Deploys page
 
 Without a config.js the app runs on demo data kept in the browser.
 """
-import base64, json, pathlib, shutil, sys
+import base64, json, pathlib, shutil, sys, zipfile
 ROOT = pathlib.Path(__file__).parent
 SRC, DIST = ROOT / 'src', ROOT / 'dist'
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -44,6 +45,12 @@ def build():
     (DIST / 'index.html').write_text(page, encoding='utf-8')
     for f in ['schema.sql', 'config.example.js', 'SETUP.md'] + (['config.js'] if has_config else []):
         if (ROOT / f).exists(): shutil.copy(ROOT / f, DIST / f)
+    shutil.copytree(SRC / 'photos', DIST / 'photos', dirs_exist_ok=True)  # team photos on the homepage
+    # One file for Netlify drag-and-drop: index.html at the zip's root, no setup notes or schema on the public site
+    site = ['index.html', 'config.js'] + [f'photos/{p.name}' for p in sorted((DIST / 'photos').iterdir())]
+    with zipfile.ZipFile(ROOT / 'netlify-drop.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+        for f in site:
+            if (DIST / f).exists(): z.write(DIST / f, f)
     print(f'dist/index.html {len(page) // 1024} KB' + (' (with config.js)' if has_config else ' (demo data until config.js is added)'))
 
 if __name__ == '__main__':

@@ -10,33 +10,33 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Mono:wght@400;500&display=swap">
 <style>
 :root{
-  --paper:#F3F6FB; --surface:#FFFFFF; --sheet:#FBFCFF;
-  --ink:#1B2440; --muted:#5A6684; --line:#DCE4F1;
-  --rule:#9DB6E0; --rule-soft:#D3DFF2; --margin:#EDB0B0;
+  --paper:#F5F8F8; --surface:#FFFFFF; --sheet:#FDFEFE;
+  --ink:#0B0F10; --muted:#4A5A5C; --line:#E1E8E8;
+  --rule:#9CC3C7; --rule-soft:#D3E6E8; --margin:#EDB0B0;
   --accent:#E8930C; --accent-ink:#8A5300; --accent-wash:rgba(232,147,12,.16);
-  --graphite:#39425E; --ok:#17915F; --bad:#D63A32; --missed:#9AA3B8;
-  --band:rgba(46,110,214,.09); --shadow:0 1px 2px rgba(27,36,64,.06),0 8px 24px rgba(27,36,64,.06);
+  --graphite:#2A3436; --ok:#17915F; --bad:#D63A32; --missed:#9AA3B8;
+  --band:rgba(14,110,118,.09); --shadow:0 1px 2px rgba(6,40,44,.06),0 8px 24px rgba(6,40,44,.07);
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
   --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --paper:#0F1422; --surface:#161D31; --sheet:#141B2E;
-    --ink:#E6EBF6; --muted:#98A3C0; --line:#263150;
-    --rule:#3E5690; --rule-soft:#243258; --margin:#6E3444;
+    --paper:#060909; --surface:#0E1718; --sheet:#0C1415;
+    --ink:#F2F6F6; --muted:#A2B4B5; --line:#1D2E30;
+    --rule:#2F5A5F; --rule-soft:#173235; --margin:#6E3444;
     --accent:#FFB42E; --accent-ink:#FFCB6B; --accent-wash:rgba(255,180,46,.16);
-    --graphite:#D3DAEC; --ok:#3CCB8E; --bad:#FF6B61; --missed:#5F6A88;
-    --band:rgba(120,165,255,.10); --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    --graphite:#D6E2E3; --ok:#3CCB8E; --bad:#FF6B61; --missed:#5D7072;
+    --band:rgba(61,183,192,.10); --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
   }
 }
 :root[data-theme="dark"]{
-  --paper:#0F1422; --surface:#161D31; --sheet:#141B2E;
-  --ink:#E6EBF6; --muted:#98A3C0; --line:#263150;
-  --rule:#3E5690; --rule-soft:#243258; --margin:#6E3444;
+  --paper:#060909; --surface:#0E1718; --sheet:#0C1415;
+  --ink:#F2F6F6; --muted:#A2B4B5; --line:#1D2E30;
+  --rule:#2F5A5F; --rule-soft:#173235; --margin:#6E3444;
   --accent:#FFB42E; --accent-ink:#FFCB6B; --accent-wash:rgba(255,180,46,.16);
-  --graphite:#D3DAEC; --ok:#3CCB8E; --bad:#FF6B61; --missed:#5F6A88;
-  --band:rgba(120,165,255,.10); --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  --graphite:#D6E2E3; --ok:#3CCB8E; --bad:#FF6B61; --missed:#5D7072;
+  --band:rgba(61,183,192,.10); --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
@@ -365,7 +365,7 @@ body.locked .teacher-only{display:none!important}
   --band:rgba(190,190,255,.12); --frame:#3A3550; --frame-lit:#55506E; --tray:#2A2640;
 }
 /* FW-THEMES:END */
-body.pilot .topbar,body.pilot #view-setup,body.pilot #checkBtn,body.pilot .skin-pick,body.pilot .how,body.pilot #testAdmin{display:none!important}
+body.pilot .modes,body.pilot .topbar,body.pilot #view-setup,body.pilot #checkBtn,body.pilot .skin-pick,body.pilot .how,body.pilot #testAdmin{display:none!important}
 body.pilot .modes{grid-template-columns:repeat(3,minmax(0,1fr))}
 body.check-only #demoBtn,body.check-only #pracBtn,body.check-only #beatmap,body.check-only #waveWWrap{display:none!important}
 body.check-only .modes{grid-template-columns:1fr}
@@ -950,7 +950,7 @@ function drawInk(){
   cx.lineWidth=w;
   for(let i=1;i<P.length;i++){
     const a=P[i-1], b=P[i]; if(a.seg!==b.seg||b.pg!==S.page) continue;
-    const inside = b.k>=0 && b.d<=S.tol;
+    const inside = b.k>=0 && b.d<=S.tol && !b.back; // wrong-way ink is red even on the line
     cx.strokeStyle = b.k<0 ? C.missed : inside ? C.graphite : C.bad;
     cx.beginPath(); cx.moveTo(X(a.x),Y(a.y)); cx.lineTo(X(b.x),Y(b.y)); cx.stroke();
   }
@@ -1138,12 +1138,19 @@ function near(j){
   const s=S.strokes[j]; if(!s||!S.pen||s.page!==S.page) return false;
   return nearestOn(s,S.pen.x,S.pen.y).d<=leash();
 }
-const onPath=k=>near(k)||near(k-1)||near(k+1);
+const onPath=k=>S.penStatus!=='back'&&(near(k)||near(k-1)||near(k+1)); // writing the wrong way counts as off the path
+// on stroke j where the writing should carry on: its start, or the point already reached on it.
+// Being near the far end does not count, because starting there is writing it backwards.
+function nearStart(j){
+  if(!near(j)) return false;
+  const s=S.strokes[j], f=nearestOn(s,S.pen.x,S.pen.y).i/(s.pts.length-1);
+  return f<=(S.reach[j]||0)+.35||dist([S.pen.x,S.pen.y],s.pts[0])<=leash();
+}
 function ready(j){
   if(!follows()) return true;
   const s=S.strokes[j];
-  if(!S.penDown) return false;
-  return near(j)||(s.j&&j>0&&near(j-1)); // a joined stroke is ready while the pen is finishing the one before it
+  if(!S.penDown||S.penStatus==='back') return false;
+  return nearStart(j)||(s.j&&j>0&&near(j-1)); // a joined stroke is ready while the pen is finishing the one before it
 }
 function newFlowOut(){
   if(!actx) return;
@@ -1174,8 +1181,9 @@ function tryResume(){
   if(k<0){ resume(b); return; }
   if(ready(k)){ resume(b); return; }
   if(!S.penDown) return;
-  // pen went straight to the next piece (a dot, a cross, the next word): the music jumps there
-  const n=k+1; if(n<S.strokes.length&&near(n)) resume(S.strokes[n].b0);
+  // pen went straight to the next piece (a dot, a cross, the next word): the music jumps there.
+  // Not to a joined stroke: it starts where this one ends, so the pen there is about to write this one backwards.
+  const n=k+1; if(n<S.strokes.length&&!S.strokes[n].j&&S.penStatus!=='back'&&nearStart(n)) resume(S.strokes[n].b0);
 }
 function setDuck(on,ramp=.12){
   S.ducked=on;
@@ -1344,8 +1352,19 @@ function addPoint(e){
   const [x,y]=toUnits(e); S.pen={x,y};
   const pt={x,y,t:S.playing?beatNow():null,seg:S.seg,pg:S.page};
   assign(pt); S.points.push(pt);
-  if(S.playing&&pt.k>=0){ const s=S.strokes[pt.k], r=nearestOn(s,x,y); if(r.d<=leash()) S.reach[pt.k]=Math.max(S.reach[pt.k]||0,r.i/(s.pts.length-1)); }
-  S.penStatus = pt.k<0 ? null : pt.d<=S.tol ? 'in' : 'out';
+  if(pt.k>=0){
+    const s=S.strokes[pt.k], n=s.pts.length, r=nearestOn(s,x,y), f=r.i/(n-1);
+    // live direction: the same forward/backward travel along the stroke that direction() grades, so wrong-way ink shows at once
+    const w=S.way;
+    // run: backward travel since the pen last moved forward, so turning around mid-stroke shows too
+    if(w&&w.seg===pt.seg&&w.k===pt.k){ const di=r.i-w.i; if(Math.abs(di)<=n*.25){ if(di>0){ w.fw+=di; w.run=0; } else { w.bw-=di; w.run-=di; } } w.i=r.i; }
+    else S.way={seg:pt.seg,k:pt.k,i:r.i,fw:0,bw:0,run:0};
+    const v=S.way, min=Math.max(n*.2,25); // a fifth of the stroke and at least 25 points (.375 x-height), so a shaky hand is not "wrong way"
+    pt.back=s.len>=.35&&r.d<=leash()&&(v.run>min||(v.bw>min&&v.bw>v.fw));
+    // progress only counts when it is continuous from the start, so landing on the far end is not "reached"
+    if(S.playing&&r.d<=leash()&&!pt.back){ const cur=S.reach[pt.k]||0; if(f<=cur+.25) S.reach[pt.k]=Math.max(cur,f); }
+  }
+  S.penStatus = pt.k<0 ? null : pt.back ? 'back' : pt.d<=S.tol ? 'in' : 'out';
 }
 cv.addEventListener('pointerdown',e=>{
   if(S.mode==='demo'||S.view!=='write') return; // results page is read-only
@@ -1440,7 +1459,7 @@ function updateHud(){
   else if(S.points.length) L.innerHTML='Free trace (not timed)';
   else L.innerHTML=`<b>${esc(shortText(S.word))}</b> · ${S.strokes.length} strokes · ${fmtBpm(S.bpm)} BPM`;
   pen.classList.remove('in','out');
-  if(S.penDown&&S.penStatus){ pen.classList.add(S.penStatus); pt.textContent=S.penStatus==='in'?'Inside margin':'Outside margin'; }
+  if(S.penDown&&S.penStatus){ pen.classList.add(S.penStatus==='back'?'out':S.penStatus); pt.textContent=S.penStatus==='in'?'Inside margin':S.penStatus==='back'?'Wrong way · start at the big dot':'Outside margin'; }
   else pt.textContent=S.penDown?'Waiting for a stroke':(S.playing&&!S.flow&&S.beat>=COUNT_IN?'Pen up · music paused':'Pen up');
 }
 const pct=v=>Math.round(v*100)+'%';
@@ -1540,6 +1559,9 @@ function updateModes(){
   $('resultsStep').disabled=S.playing||!S.testSnap; $('seeResults').disabled=S.playing||!S.testSnap; $('seeResults').hidden=PILOT&&!S.testSnap;
   $('testAdmin').hidden=!S.testDone||PILOT;
   if(S.testDone&&testInfo) $('testAdminNote').textContent=`Taken once: ${testInfo.valid} of ${testInfo.total} strokes valid. Reset it to let the test be taken again. Changing the words also resets it.`;
+  // in the app these buttons are hidden and the page's step row drives them: tell it what each step can do now
+  const st=b=>({off:b.disabled,run:b.classList.contains('running')});
+  if(PILOT) emit({type:'modes',demo:st(map.demo),practice:st(map.practice),test:st(map.test),confirm:!!testConfirm&&!S.testDone});
 }
 function syncUI(){ syncLane(); updateHud(); renderResults(); updateTrackInfo(); updateSummary(); updateModes(); }
 function setControlsLocked(on){

@@ -28,6 +28,11 @@ route('', { bare: true }, () => {
   const fam = [['Undercurve', 'itwurspj', 'Start low and swing up and to the right.'], ['Undercurve loops', 'elhkfb', 'Swing up, loop back, and slant down.'], ['Downcurve', 'adgocq', 'Start at the midline and curve back to the left.'], ['Overcurve', 'nmxyzv', 'Start with a hump that curves up and over.']];
   const team = SITE.team || [];
   return `${siteHeader()}
+  <section class="ink-intro" id="inkIntro" aria-label="FloWriter: cursive written to the beat"><div class="ink-stage">
+    <canvas id="inkCanvas" aria-hidden="true"></canvas>
+    <div class="ink-copy"><div class="ink-hint" id="inkHint"><p class="eyebrow">Cursive handwriting × rhythm</p><b>Scroll to write</b><span class="ink-cue" aria-hidden="true"></span></div>
+      <p class="ink-tag" id="inkTag" style="opacity:0">Cursive, written to the <em>beat</em>.</p></div>
+  </div></section>
   <section class="hero"><div class="wrap">
     <div>
       <p class="eyebrow">Cursive handwriting × rhythm</p>
@@ -88,7 +93,8 @@ route('', { bare: true }, () => {
 
   ${team.length ? `<section class="band" id="team"><div class="wrap">
     <div><p class="eyebrow">Team</p><h2 class="big">The people building FloWriter</h2></div>
-    <div class="team">${team.map(m => `<div class="member"><div class="ph">${m.photo ? `<img src="${esc(m.photo)}" alt="">` : esc(initials(m))}</div><div><h3>${esc(m.name)}</h3><div class="role">${esc(m.role)}</div></div><p>${esc(m.bio)}</p></div>`).join('')}</div>
+    <div class="team-grid">${SITE.groupPhoto ? `<figure class="group-photo"><img src="${esc(SITE.groupPhoto)}" alt="${esc(SITE.groupPhotoAlt || '')}" loading="lazy">${SITE.groupPhotoCaption ? `<figcaption>${esc(SITE.groupPhotoCaption)}</figcaption>` : ''}</figure>` : ''}
+    <div class="team">${team.map(m => `<div class="member"><div class="ph">${m.photo ? `<img src="${esc(m.photo)}" alt="" loading="lazy">` : esc(initials(m))}</div><div><h3>${esc(m.name)}</h3><div class="role">${esc(m.school || m.role || '')}</div>${m.major ? `<div class="major">${esc(m.major)}</div>` : ''}</div><p>${esc(m.bio)}</p>${m.linkedin ? `<a class="li" href="${esc(m.linkedin)}" target="_blank" rel="noopener">${IC.link} LinkedIn</a>` : ''}</div>`).join('')}</div></div>
   </div></section>` : '<span id="team"></span>'}
 
   <section class="band alt" id="privacy"><div class="wrap" style="gap:16px">
@@ -96,7 +102,63 @@ route('', { bare: true }, () => {
     <p class="lead" style="font-size:16px">Students join with a class code and a username. FloWriter does not ask students for an email address or a birth date. It stores a display name (first name and last initial), the class they joined, and their writing attempts, and only their teacher can see their work. Teachers confirm their school authorizes classroom use before creating a class.</p>
   </div></section>
   ${siteFooter()}`;
-}, () => { heroAnimation(); paintFamilies(); });
+}, () => { inkIntro(); heroAnimation(); paintFamilies(); });
+
+// The scroll intro: ink blots splash onto the page as you scroll, then fly into the strokes of "FloWriter".
+// Everything is a function of scroll progress p (0 at the top of the section, 1 when it ends), so scrolling back rewinds it.
+function inkIntro(){
+  const sec = $('#inkIntro'), c = $('#inkCanvas'); if (!sec || !c) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const flat = []; Cursive.build('FloWriter').strokes.forEach((s, si) => s.pts.forEach(p => flat.push([p[0], p[1], si])));
+  let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9; flat.forEach(([x, y]) => { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); });
+  const r = rng(7), N = 130, A = .42, FLY = .3, DUR = .14; // splash until A; blot i flies from A + FLY*i/N for DUR
+  const blots = Array.from({ length: N }, (_, i) => ({ sx: .05 + r() * .9, sy: .14 + r() * .74, R: .5 + r() * 1.1, at: -.03 + r() * (A - .08),
+    target: Math.round((i + .5) / N * (flat.length - 1)), tone: r() < .14 ? 'red' : r() < .2 ? 'teal' : 'ink',
+    shape: Array.from({ length: 10 }, () => .8 + r() * .4), drops: Array.from({ length: 2 + Math.floor(r() * 4) }, () => ({ a: r() * 6.283, d: 1.3 + r() * 1.4, s: .1 + r() * .22 })) }));
+  const k01 = v => Math.max(0, Math.min(1, v)), ease = t => t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+  const back = t => 1 + 2.7 * (t - 1) ** 3 + 1.7 * (t - 1) ** 2; // overshoot: the splat
+  const blob = (g, x, y, rad, shape) => { // a lumpy circle: a smooth curve through the midpoints of uneven vertices
+    const P = shape.map((m, j) => { const a = j / shape.length * 6.283; return [x + Math.cos(a) * rad * m, y + Math.sin(a) * rad * m]; }), M = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+    g.beginPath(); g.moveTo(...M(P[P.length - 1], P[0])); P.forEach((p, j) => g.quadraticCurveTo(p[0], p[1], ...M(p, P[(j + 1) % P.length]))); g.fill(); };
+  let raf = 0;
+  const draw = () => {
+    raf = 0;
+    const w = c.clientWidth, h = c.clientHeight, dpr = window.devicePixelRatio || 1; if (!w || !h) return;
+    if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const cs = getComputedStyle(document.documentElement), v = n => cs.getPropertyValue(n).trim(), col = { ink: v('--ink'), red: v('--red'), teal: v('--blue') };
+    const p = reduce ? 1 : k01(-sec.getBoundingClientRect().top / Math.max(1, sec.offsetHeight - h));
+    const xh = Math.min(w * .84 / (maxX - minX), h * .19), ox = (w - (maxX - minX) * xh) / 2 - minX * xh, mid = (minY + maxY) / 2;
+    const X = u => ox + u * xh, Y = y => h * .5 + (mid - y) * xh, sw = Math.max(3, xh * .12), bs = Math.min(w, h) * .03;
+    // handwriting guide lines fade in as the blots start to gather
+    g.globalAlpha = k01((p - A + .08) / .12) * .9; g.strokeStyle = v('--rule'); g.lineWidth = 1.2;
+    [[0, []], [1, [7, 7]]].forEach(([y, d]) => { g.setLineDash(d); g.beginPath(); g.moveTo(w * .04, Y(y)); g.lineTo(w * .96, Y(y)); g.stroke(); }); g.setLineDash([]); g.globalAlpha = 1;
+    // the line, written up to the last blot that has landed
+    const upto = k01((p - A - DUR) / FLY) * (flat.length - 1);
+    g.strokeStyle = col.ink; g.lineWidth = sw; g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath();
+    for (let i = 0; i <= upto && i < flat.length; i++) { const [x, y, si] = flat[i]; i && flat[i - 1][2] === si ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y)); }
+    g.stroke();
+    blots.forEach((b, i) => {
+      const a = k01((p - b.at) / .05); if (a <= 0) return;
+      const f = k01((p - A - FLY * i / N) / DUR); if (f >= 1) return; // landed: it is part of the line now
+      const T = flat[b.target], e = ease(f), x = b.sx * w + (X(T[0]) - b.sx * w) * e, y = b.sy * h + (Y(T[1]) - b.sy * h) * e;
+      const rad = b.R * bs * back(a) * (1 - e) + sw / 2 * e;
+      g.fillStyle = col[b.tone]; blob(g, x, y, rad, b.shape);
+      b.drops.forEach(d => { g.beginPath(); g.arc(x + Math.cos(d.a) * rad * d.d * (.6 + .4 * a), y + Math.sin(d.a) * rad * d.d * (.6 + .4 * a), rad * d.s * (1 - e), 0, 6.283); g.fill(); });
+    });
+    // a red underline swoosh once the word is written
+    const u = k01((p - A - FLY - DUR) / .1);
+    if (u > 0) { g.strokeStyle = col.red; g.lineWidth = Math.max(3, sw * .8); g.beginPath(); const y0 = Y(minY) + xh * .35, x0 = X(minX), x1 = x0 + (X(maxX) - x0) * u;
+      g.moveTo(x0, y0); g.quadraticCurveTo((x0 + x1) / 2, y0 + xh * .25 * u, x1, y0 - xh * .1 * u); g.stroke(); }
+    const hint = $('#inkHint'), tag = $('#inkTag');
+    if (hint) hint.style.opacity = 1 - k01(p / .08);
+    if (tag) { const o = k01((u - .3) / .7); tag.style.opacity = o; tag.style.transform = `translateY(${(1 - o) * 14}px)`; }
+  };
+  const req = () => { if (!raf) raf = requestAnimationFrame(draw); };
+  addEventListener('scroll', req, { passive: true }); addEventListener('resize', req);
+  cleanup.push(() => { removeEventListener('scroll', req); removeEventListener('resize', req); cancelAnimationFrame(raf); });
+  draw();
+}
 
 function paintFamilies(){
   const cs = getComputedStyle(document.documentElement), ink = cs.getPropertyValue('--ink').trim();
@@ -167,9 +229,10 @@ route('login', { bare: true, guest: true, title: 'Log in' }, () => `${siteHeader
   <p class="form-error" role="alert"></p>
   <button class="btn primary lg" type="submit">Log in</button>
   <p class="note">Teachers: <a href="#/forgot">forgot your password?</a> Students: your teacher can give you a new one.<br>New student? <a href="#/join">Join your class with a code</a>. New teacher? <a href="#/signup">Start a class</a>.</p>
-  ${api.demo ? `<div class="demo-accounts"><span class="note" style="font-weight:800">Demo accounts</span>
-    <button type="button" data-act="quick-login" data-u="mr_murry" data-p="teacher2026"><span>Mr. Murry <span class="muted">· teacher</span></span><span class="mono note">mr_murry</span></button>
-    <button type="button" data-act="quick-login" data-u="evan_writes" data-p="flowriter1"><span>Evan S. <span class="muted">· 3rd grade student</span></span><span class="mono note">evan_writes</span></button></div>` : ''}
+  ${api.demo ? `<div class="demo-accounts"><span class="note" style="font-weight:800">Demo accounts · one click to log in</span>
+    ${[['mr_murry', 'teacher2026', 'Mr. Murry', 'teacher · pilot admin'], ['ms_rivera', 'teacher2026', 'Ms. Rivera', 'teacher · Lakeside'],
+       ['evan_writes', 'flowriter1', 'Evan S.', '3rd grade · Mr. Murry'], ['omar_a', 'student123', 'Omar A.', '2nd grade · Mr. Murry'], ['arlo_r', 'student123', 'Arlo R.', '2nd grade · Ms. Rivera']]
+      .map(([u, p, n, r]) => `<button type="button" data-act="quick-login" data-u="${u}" data-p="${p}"><span>${n} <span class="muted">· ${r}</span></span><span class="mono note">${u}</span></button>`).join('')}</div>` : ''}
 </form></div>`);
 // ---------------------------------------------------------------- teacher password reset
 route('forgot', { bare: true, title: 'Reset your password' }, () => `${siteHeader()}<div class="auth"><form class="auth-card" data-form="forgot" novalidate>

@@ -8,7 +8,8 @@
 // =====================================================================
 const Backend = (() => {
   const CFG = (typeof window !== 'undefined' && window.FLOWRITER_CONFIG) || null;
-  const enabled = !!(CFG && CFG.url && CFG.anonKey);
+  // the unedited example config (YOUR-PROJECT / YOUR-ANON-PUBLIC-KEY) means "no backend yet": stay on demo data
+  const enabled = !!(CFG && CFG.url && CFG.anonKey && !/YOUR-/.test(CFG.url + CFG.anonKey));
   const STUDENT_DOMAIN = (CFG && CFG.studentEmailDomain) || 'students.flowriter.app';
   const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
   let sb = null, failures = 0;

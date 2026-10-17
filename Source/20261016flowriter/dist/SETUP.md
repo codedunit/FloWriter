@@ -84,14 +84,31 @@ Upload the `dist/` folder to any static host (Netlify drop, Vercel, GitHub
 Pages, Cloudflare Pages). Use HTTPS. The login-card QR codes point at the
 address the cards were printed from, so print cards from the real site.
 
+### Netlify, one file
+
+The build also writes `netlify-drop.zip`: only what the live site needs
+(`index.html`, `config.js`, `photos/`), without these notes or the schema.
+
+1. **First time:** log in to Netlify, open app.netlify.com/drop and drop
+   `netlify-drop.zip` on it. You get a site at `something.netlify.app`.
+2. **Your domain:** that site → Domain management → Add a domain. Netlify
+   lists the DNS records to add at your registrar and turns on HTTPS by itself
+   once they resolve.
+3. **Every update:** rebuild, then open the site's **Deploys** tab and drop the
+   new zip there. Don't use the /drop page again: it makes a new site, without
+   your domain.
+
+If Netlify ever refuses the zip, unzip it and drop the folder instead.
+
 `studentEmailDomain` is the domain behind student logins
 (`username@that-domain`). Those addresses never receive mail. Use a domain you own.
 
 ## Homepage content
 
 `src/site.js`: the video (`.mp4` or YouTube link), team, about, the states
-statistic and its source, contact email, privacy-page retention text. Rebuild
-after editing.
+statistic and its source, contact email, privacy-page retention text. Team
+photos and the group photo live in `src/photos/` (the build copies them to
+`dist/photos/`). Rebuild after editing.
 
 ## Data
 
@@ -105,7 +122,7 @@ after editing.
 ## Tests
 
 ```
-python3 tools/test_engine.py      # tracing engine (19 checks)
+python3 tools/test_engine.py      # tracing engine (22 checks)
 python3 tools/test_app.py         # teacher -> student -> teacher flow (23)
 python3 tools/test_pilot.py       # pilot features (29)
 python3 tools/test_backend.py     # Supabase adapter against a fake client (18)
