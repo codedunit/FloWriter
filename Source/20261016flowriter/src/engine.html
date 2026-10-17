@@ -1,0 +1,2094 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>Flowriter Assignment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F3F6FB; --surface:#FFFFFF; --sheet:#FBFCFF;
+  --ink:#1B2440; --muted:#5A6684; --line:#DCE4F1;
+  --rule:#9DB6E0; --rule-soft:#D3DFF2; --margin:#EDB0B0;
+  --accent:#E8930C; --accent-ink:#8A5300; --accent-wash:rgba(232,147,12,.16);
+  --graphite:#39425E; --ok:#17915F; --bad:#D63A32; --missed:#9AA3B8;
+  --band:rgba(46,110,214,.09); --shadow:0 1px 2px rgba(27,36,64,.06),0 8px 24px rgba(27,36,64,.06);
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1422; --surface:#161D31; --sheet:#141B2E;
+    --ink:#E6EBF6; --muted:#98A3C0; --line:#263150;
+    --rule:#3E5690; --rule-soft:#243258; --margin:#6E3444;
+    --accent:#FFB42E; --accent-ink:#FFCB6B; --accent-wash:rgba(255,180,46,.16);
+    --graphite:#D3DAEC; --ok:#3CCB8E; --bad:#FF6B61; --missed:#5F6A88;
+    --band:rgba(120,165,255,.10); --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1422; --surface:#161D31; --sheet:#141B2E;
+  --ink:#E6EBF6; --muted:#98A3C0; --line:#263150;
+  --rule:#3E5690; --rule-soft:#243258; --margin:#6E3444;
+  --accent:#FFB42E; --accent-ink:#FFCB6B; --accent-wash:rgba(255,180,46,.16);
+  --graphite:#D3DAEC; --ok:#3CCB8E; --bad:#FF6B61; --missed:#5F6A88;
+  --band:rgba(120,165,255,.10); --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:24px 56px;display:flex;flex-direction:column;gap:20px}
+h2{font-family:var(--display);font-weight:700;font-size:15px;margin:0;letter-spacing:.01em}
+button{font:inherit;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 16px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{border-color:var(--rule)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#231500}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.chip:focus-visible,input:focus-visible,.cell:focus-visible,.seg button:focus-visible,.step:focus-visible,.mode:focus-visible,.lt:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn svg{width:16px;height:16px}
+
+/* steps + views */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.theme-btn{flex:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;padding:0;box-shadow:var(--shadow)}
+.theme-btn:hover{border-color:var(--rule)}
+.theme-btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.theme-btn svg{width:18px;height:18px}
+.steps{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:5px;width:max-content;max-width:100%;overflow-x:auto;box-shadow:var(--shadow)}
+.step{border:0;background:transparent;color:var(--muted);padding:8px 14px;border-radius:10px;display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;white-space:nowrap}
+.step .sn{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:500;border:1px solid currentColor}
+.step:hover:not(:disabled){color:var(--ink)}
+.step[aria-current="page"]{background:var(--ink);color:var(--paper)}
+.step:disabled{opacity:.45;cursor:not-allowed}
+.view{display:flex;flex-direction:column;gap:20px}
+.view-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 16px}
+.view-head h1{font-family:var(--display);font-weight:800;font-size:clamp(24px,3.6vw,32px);line-height:1.1;margin:0;letter-spacing:-.02em}
+.view-head .note{margin-top:4px;max-width:62ch}
+.foot-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px 12px;flex-wrap:wrap}
+#setupSummary b{color:var(--ink)}
+
+/* writing modes */
+.modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1080px){.modes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){.modes{grid-template-columns:1fr}}
+.mode{position:relative;text-align:left;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow)}
+.mode:hover:not(:disabled){border-color:var(--rule)}
+.mode .mt{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:17px}
+.mode .mt svg{width:18px;height:18px;color:var(--accent);flex:none}
+.mode .md{font-size:13.5px;color:var(--muted);padding-right:8px}
+.mode.primary{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.mode.running{border-color:var(--accent);background:var(--accent);color:#231500;cursor:default}
+.mode.running .md,.mode.running .mt svg{color:#4a2e00}
+.mode:disabled:not(.running){opacity:.45;cursor:not-allowed}
+.mode .badge{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;background:var(--accent);color:#231500}
+.write-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.write-bar .note b{color:var(--ink)}
+
+.words{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.words .lbl{font-size:13px;color:var(--muted);margin-right:4px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;font-family:var(--mono);font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip:disabled{opacity:.45;cursor:not-allowed}
+/* custom text composer */
+.composer{display:flex;flex-direction:column;gap:8px}
+.composer-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.composer-head label{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.composer-head span{font-size:12.5px;color:var(--muted)}
+.composer-box{position:relative;display:flex;align-items:flex-start;gap:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:10px 48px 10px 16px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+.composer-box:hover{border-color:var(--rule)}
+.composer-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-wash),var(--shadow)}
+.composer-box::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--margin);opacity:.9}
+.composer-box .pen{flex:none;width:20px;height:20px;margin-top:6px;color:var(--muted);transition:color .15s}
+.composer-box:focus-within .pen,.composer.has-text .pen{color:var(--accent)}
+#customWord{flex:1;min-width:0;border:0;outline:0;resize:none;overflow:hidden;background:transparent;color:var(--ink);
+  font-family:var(--body);font-size:18px;line-height:32px;min-height:32px;padding:0;
+  background-image:linear-gradient(to bottom,transparent 30px,var(--rule-soft) 30px,var(--rule-soft) 31px,transparent 31px);background-size:100% 32px;background-attachment:local}
+#customWord::placeholder{color:var(--muted);opacity:.8}
+#customWord:disabled{opacity:.55;cursor:not-allowed}
+.composer-clear{position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--sheet);color:var(--muted);display:grid;place-items:center;padding:0}
+.composer-clear:hover{color:var(--ink);border-color:var(--rule)}
+.composer-clear svg{width:12px;height:12px}
+.composer-foot{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.composer-foot .allowed{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+kbd{font-family:var(--mono);font-size:12px;min-width:20px;text-align:center;padding:1px 5px;border-radius:5px;border:1px solid var(--line);border-bottom-width:2px;background:var(--surface);color:var(--ink)}
+.composer-foot .meta{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.composer-foot .meta b{color:var(--accent-ink);font-weight:500}
+
+/* pages */
+.pager{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-top:1px solid var(--line);background:var(--surface)}
+.pg-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);display:grid;place-items:center;padding:0}
+.pg-btn:hover:not(:disabled){border-color:var(--rule)}
+.pg-btn:disabled{opacity:.35;cursor:not-allowed}
+.pg-btn svg{width:16px;height:16px}
+.pg-mid{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted);flex-wrap:wrap;justify-content:center}
+.pg-mid b{color:var(--ink)}
+.pg-dots{display:inline-flex;gap:6px}
+.pg-dots i{width:8px;height:8px;border-radius:50%;background:var(--rule-soft);transition:background .2s,width .2s}
+.pg-dots i.on{background:var(--accent);width:20px;border-radius:4px}
+.pg-dots i.done{background:var(--rule)}
+@keyframes pgflip{from{opacity:.2;transform:translateX(24px)}to{opacity:1;transform:none}}
+#pad.flip{animation:pgflip .38s ease-out}
+.cell.rest.newpage{border-color:var(--accent);border-style:dashed}
+.cell.rest.newpage .ix{color:var(--accent-ink)}
+.pg-btn:focus-visible,.composer-clear:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.stage{position:relative;background:var(--sheet);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+#pad{display:block;width:100%;touch-action:none;cursor:crosshair}
+.hud{position:absolute;inset:12px 12px auto 12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none;flex-wrap:wrap}
+.pill{font-family:var(--mono);font-size:12px;padding:5px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.pill b{color:var(--ink);font-weight:500}
+#hudLeft{display:inline-block;max-width:100%}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--missed)}
+.pill.in .dot{background:var(--ok)} .pill.out .dot{background:var(--bad)}
+.pill.in{color:var(--ok)} .pill.out{color:var(--bad)}
+
+.beatmap{display:flex;flex-direction:column;gap:10px}
+.beatmap-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.beatmap-head p{margin:0;font-size:13px;color:var(--muted)}
+.lane-scroll{overflow-x:auto;padding-bottom:10px}
+.lane{display:flex;gap:0;min-width:max-content}
+.bar{display:flex;gap:4px;padding:0 8px;border-left:2px solid var(--rule)}
+.bar:first-child{border-left-color:transparent;padding-left:0}
+.cell{width:56px;height:58px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;position:relative}
+.cell.w2{width:116px}
+.cell .ch{font-family:var(--display);font-weight:700;font-size:20px;line-height:1}
+.cell .ix{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.cell.count,.cell.rest{background:transparent;border-style:dashed;cursor:default}
+.cell.count .ch,.cell.rest .ch{font-family:var(--mono);font-weight:500;font-size:16px;color:var(--muted)}
+.cell.valid{background:color-mix(in srgb,var(--ok) 14%,var(--surface));border-color:var(--ok)}
+.cell.off{background:color-mix(in srgb,var(--bad) 13%,var(--surface));border-color:var(--bad)}
+.cell.missed{border-style:dashed;border-color:var(--missed)}
+.cell.reversed{background:color-mix(in srgb,var(--bad) 13%,var(--surface));border-color:var(--bad);border-style:dotted}
+.cell.missed .ch{color:var(--missed)}
+.cell.now{background:var(--accent);border-color:var(--accent);color:#231500}
+.cell.now .ix{color:#4a2e00}
+.cell.rest .ch{font-size:13px}
+.cell.go::before{content:"";position:absolute;left:6px;top:7px;border-left:7px solid var(--accent);border-top:5px solid transparent;border-bottom:5px solid transparent}
+.cell.go.now::before{border-left-color:#231500}
+.cell.sel::after{content:"";position:absolute;left:10px;right:10px;bottom:-7px;height:3px;border-radius:2px;background:var(--ink)}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.music-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.music-head .note{margin-top:2px}
+.music.drop{outline:3px dashed var(--accent);outline-offset:-6px}
+.track-ui{display:flex;flex-direction:column;gap:16px}
+.track-row{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap}
+.track-row .note{margin:0}
+#trackName b{color:var(--ink)}
+.track-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px}
+@media (max-width:720px){.track-grid{grid-template-columns:1fr}}
+.num{font-family:var(--mono);font-size:15px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:120px}
+.nudge{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.nudge button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 9px;font-family:var(--mono);font-size:12.5px}
+.nudge .num{width:96px}
+.wave-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sheet)}
+#wave{display:block;width:100%;height:104px;cursor:pointer}
+#waveW{display:block;width:100%;height:104px}
+.wave-head{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
+.wave-head b{color:var(--ink)}
+label.inline{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+label.inline input{accent-color:var(--accent);width:16px;height:16px}
+.note.warn{color:var(--bad)}
+.metro{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--sheet);flex-wrap:wrap}
+.metro-light{width:12px;height:12px;border-radius:50%;background:var(--rule-soft);flex:none;transition:background .08s,box-shadow .08s}
+.metro-light.on{background:var(--ink)}
+.metro-light.on.acc{background:var(--accent);box-shadow:0 0 0 4px var(--accent-wash)}
+.metro-bpm{font-family:var(--mono);font-size:12.5px;color:var(--accent-ink);font-variant-numeric:tabular-nums}
+.metro input[type=range]{width:96px}
+.metro.off .metro-bpm,.metro.off input[type=range]{opacity:.4}
+.lower,.res-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px}
+@media (max-width:820px){.lower,.res-top{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:16px}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 28px}
+@media (max-width:720px){.settings-grid{grid-template-columns:1fr}}
+.ctl{display:flex;flex-direction:column;gap:6px}
+.ctl-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ctl label{font-weight:700;font-size:14px}
+.val{font-family:var(--mono);font-size:14px;color:var(--accent-ink)}
+.ctl small{color:var(--muted);font-size:12.5px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:max-content;max-width:100%}
+.seg button{border:0;background:var(--surface);color:var(--ink);padding:7px 12px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.toggles{display:flex;flex-wrap:wrap;gap:14px 20px;border-top:1px solid var(--line);padding-top:14px}
+.toggles label{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.toggles input{accent-color:var(--accent);width:16px;height:16px}
+
+.score{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.score .big{font-family:var(--display);font-weight:800;font-size:56px;line-height:1;font-variant-numeric:tabular-nums}
+.score .of{color:var(--muted)}
+.meter{height:8px;border-radius:4px;background:var(--rule-soft);display:flex;overflow:hidden}
+.meter i{display:block;height:100%}
+.legend{display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.run{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:0}
+.issues{display:flex;flex-direction:column;gap:8px}
+.issue{display:grid;grid-template-columns:minmax(0,1fr) minmax(60px,120px) 28px;gap:10px;align-items:center;font-size:13.5px}
+.issue .trk{height:6px;border-radius:3px;background:var(--rule-soft);overflow:hidden}
+.issue .trk i{display:block;height:100%;background:var(--bad)}
+.issue b{font-family:var(--mono);font-weight:500;text-align:right}
+.letters{display:flex;flex-wrap:wrap;gap:8px}
+.lt{border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;min-width:64px}
+.lt:hover{border-color:var(--rule)}
+.lt .ch{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.1}
+.lt .ix{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.lt.sel{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.insp{display:flex;flex-direction:column;gap:10px}
+.insp-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.insp-title .glyph{font-family:var(--display);font-weight:800;font-size:28px;line-height:1}
+.status{font-family:var(--mono);font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid currentColor}
+.status.valid{color:var(--ok)} .status.off,.status.reversed{color:var(--bad)} .status.missed{color:var(--missed)} .status.pending{color:var(--muted)}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.metric{display:flex;flex-direction:column;gap:2px}
+.metric .n{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
+.metric .k{font-size:12.5px;color:var(--muted);line-height:1.3}
+.metric .t{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+.metric .n.pass{color:var(--ok)} .metric .n.fail{color:var(--bad)}
+.note{font-size:13.5px;color:var(--muted);margin:0}
+
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 6px}
+.top-actions{display:flex;align-items:center;gap:8px}
+.lock-btn svg{width:16px;height:16px}
+.lock-btn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+body.locked .teacher-only{display:none!important}
+.name-input{width:100%;font-family:var(--display);font-weight:700;font-size:20px;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:var(--shadow)}
+.name-input::placeholder{color:var(--muted);font-weight:500}
+.name-input:hover{border-color:var(--rule)}
+.name-input:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-wash),var(--shadow)}
+.test-admin{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.mode.done{border-style:dashed}
+.mode.confirm{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+.mode.confirm .mt svg{color:var(--bad)}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;border-top:1px solid var(--line);padding-top:20px}
+@media (max-width:820px){.how{grid-template-columns:1fr}}
+.how h3{font-family:var(--display);font-size:15px;margin:0 0 4px}
+.how p{margin:0;font-size:14px;color:var(--muted);max-width:52ch}
+.how code{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+/* FW-THEMES:BEGIN ===== writing-surface themes =====
+   Cosmetic only. Each palette is scoped to .stage so the rest of the page
+   keeps its own light/dark theme; the canvas reads these through
+   readColors(), which is pointed at #pad for exactly that reason.
+   The frame is a border, not padding: padding would desync the canvas
+   backing store from the box it renders in and put ink off the pointer. */
+:root[data-skin] #stageSlotW,
+:root[data-skin] #stageSlotR{
+  background-size:cover; background-position:center 38%;
+  image-rendering:pixelated;
+  padding:clamp(16px,3.6vw,52px); border-radius:16px;
+}
+:root[data-skin] .stage{
+  border:clamp(8px,1.4vw,14px) solid var(--frame);
+  border-top-color:var(--frame-lit); border-left-color:var(--frame-lit);
+  border-radius:8px; overflow:visible;
+  box-shadow:0 18px 40px rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.30);
+}
+:root[data-skin] .stage::after{            /* the ledge under the board */
+  content:""; position:absolute; left:5%; right:5%; bottom:calc(-1 * clamp(8px,1.4vw,14px) - 9px);
+  height:9px; background:var(--tray); border-radius:0 0 5px 5px;
+  box-shadow:0 5px 12px rgba(0,0,0,.45);
+}
+:root[data-skin] #pad{border-radius:3px}
+/* the theme picker in the write bar */
+.skin-pick{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);padding:9px 11px;border-radius:10px;font-weight:700}
+.skin-pick .sw{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--line);
+  background:var(--sheet);flex:none}
+.skin-pick select{border:0;background:transparent;color:inherit;font:inherit;font-weight:700;padding:0 2px}
+.skin-pick:focus-within{border-color:var(--rule)}
+.skin-pick select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+:root[data-skin="classroom"] #stageSlotW,
+:root[data-skin="classroom"] #stageSlotR{background-image:linear-gradient(rgba(14,20,16,.34),rgba(14,20,16,.50)),url("__THEME_classroom__")}
+:root[data-skin="classroom"] .stage{
+  --sheet:#32473C; --ink:#EDF4EE; --muted:#A6BCAE; --line:#4A6355;
+  --surface:rgba(27,40,33,.86); --rule:#8CAC9C; --rule-soft:#60806F; --margin:#D59A95;
+  --accent:#FFD166; --accent-ink:#FFE09A; --accent-wash:rgba(255,209,102,.20);
+  --graphite:#F4F9F5; --ok:#7BE8B4; --bad:#E8683A; --missed:#9BB1A4;
+  --band:rgba(170,215,255,.13); --frame:#5C4639; --frame-lit:#7A5E4C; --tray:#885644;
+}
+:root[data-skin="space"] #stageSlotW,
+:root[data-skin="space"] #stageSlotR{background-image:linear-gradient(rgba(6,12,24,.10),rgba(6,12,24,.30)),url("__THEME_space__")}
+:root[data-skin="space"] .stage{
+  --sheet:#0E1D33; --ink:#CFEFFF; --muted:#7FA3BF; --line:#27476B;
+  --surface:rgba(10,24,42,.86); --rule:#2F5F86; --rule-soft:#22425E; --margin:#E08A9A;
+  --accent:#7DD3FC; --accent-ink:#BDE9FF; --accent-wash:rgba(125,211,252,.20);
+  --graphite:#E8F7FF; --ok:#6EE7B7; --bad:#E8703A; --missed:#6C8CA6;
+  --band:rgba(125,211,252,.12); --frame:#44525F; --frame-lit:#6B7C8D; --tray:#2C3742;
+}
+:root[data-skin="treehouse"] #stageSlotW,
+:root[data-skin="treehouse"] #stageSlotR{background-image:linear-gradient(rgba(12,20,10,.10),rgba(12,20,10,.30)),url("__THEME_treehouse__")}
+:root[data-skin="treehouse"] .stage{
+  --sheet:#2E3A26; --ink:#F2F7E6; --muted:#A8BC95; --line:#4A5B3C;
+  --surface:rgba(26,34,20,.86); --rule:#8FA87A; --rule-soft:#62764F; --margin:#E0A07E;
+  --accent:#FFD98A; --accent-ink:#FFE9B8; --accent-wash:rgba(255,217,138,.20);
+  --graphite:#F6FAEC; --ok:#A8E86A; --bad:#E86B2E; --missed:#94A683;
+  --band:rgba(255,240,180,.12); --frame:#6B4F35; --frame-lit:#8A6845; --tray:#7A5A3C;
+}
+:root[data-skin="submarine"] #stageSlotW,
+:root[data-skin="submarine"] #stageSlotR{background-image:linear-gradient(rgba(2,18,24,.08),rgba(2,18,24,.30)),url("__THEME_submarine__")}
+:root[data-skin="submarine"] .stage{
+  --sheet:#07222B; --ink:#B6F5E8; --muted:#74A8AA; --line:#14434E;
+  --surface:rgba(5,26,33,.86); --rule:#2E6B72; --rule-soft:#1E4C55; --margin:#F09AA6;
+  --accent:#FFD98A; --accent-ink:#FFECC0; --accent-wash:rgba(255,217,138,.20);
+  --graphite:#D8FFF6; --ok:#5FE3C0; --bad:#F0734A; --missed:#5F8A8C;
+  --band:rgba(150,240,255,.12); --frame:#8A6A3A; --frame-lit:#B08A4E; --tray:#6B5230;
+}
+:root[data-skin="study"] #stageSlotW,
+:root[data-skin="study"] #stageSlotR{background-image:linear-gradient(rgba(20,12,6,.10),rgba(20,12,6,.30)),url("__THEME_study__")}
+:root[data-skin="study"] .stage{
+  --sheet:#EFE3C6; --ink:#3A2A18; --muted:#8A7556; --line:#C9B48A;
+  --surface:rgba(248,240,220,.90); --rule:#B29A6C; --rule-soft:#DCCCA8; --margin:#B0725F;
+  --accent:#8A5A2B; --accent-ink:#6B4520; --accent-wash:rgba(138,90,43,.18);
+  --graphite:#2E2114; --ok:#13492E; --bad:#E05030; --missed:#A8906A;
+  --band:rgba(138,90,43,.10); --frame:#4A3425; --frame-lit:#6A4E36; --tray:#3B2A1C;
+}
+:root[data-skin="studio"] #stageSlotW,
+:root[data-skin="studio"] #stageSlotR{background-image:linear-gradient(rgba(40,30,16,.04),rgba(40,30,16,.18)),url("__THEME_studio__")}
+:root[data-skin="studio"] .stage{
+  --sheet:#F5F0E6; --ink:#3A3A3A; --muted:#8C8578; --line:#D6CDBD;
+  --surface:rgba(252,249,243,.92); --rule:#BDB29E; --rule-soft:#E4DCCE; --margin:#C08A7A;
+  --accent:#D98A2B; --accent-ink:#A8651A; --accent-wash:rgba(217,138,43,.18);
+  --graphite:#2F2F2F; --ok:#13492E; --bad:#E05030; --missed:#A8A093;
+  --band:rgba(217,138,43,.10); --frame:#A9834F; --frame-lit:#C49B68; --tray:#8A6940;
+}
+:root[data-skin="campfire"] #stageSlotW,
+:root[data-skin="campfire"] #stageSlotR{background-image:linear-gradient(rgba(6,8,22,.08),rgba(6,8,22,.28)),url("__THEME_campfire__")}
+:root[data-skin="campfire"] .stage{
+  --sheet:#141B33; --ink:#E8E6FF; --muted:#9A9CC4; --line:#2E3558;
+  --surface:rgba(16,21,45,.86); --rule:#4A5288; --rule-soft:#343C66; --margin:#FFA08A;
+  --accent:#FFB347; --accent-ink:#FFD08A; --accent-wash:rgba(255,179,71,.20);
+  --graphite:#F2F0FF; --ok:#86E39B; --bad:#E85F28; --missed:#7B7EA8;
+  --band:rgba(190,190,255,.12); --frame:#3A3550; --frame-lit:#55506E; --tray:#2A2640;
+}
+/* FW-THEMES:END */
+body.pilot .topbar,body.pilot #view-setup,body.pilot #checkBtn,body.pilot .skin-pick,body.pilot .how,body.pilot #testAdmin{display:none!important}
+body.pilot .modes{grid-template-columns:repeat(3,minmax(0,1fr))}
+body.check-only #demoBtn,body.check-only #pracBtn,body.check-only #beatmap,body.check-only #waveWWrap{display:none!important}
+body.check-only .modes{grid-template-columns:1fr}
+.sound-ctl{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sound-ctl button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 11px;font-weight:700;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.sound-ctl button[aria-pressed="false"]{color:var(--muted);text-decoration:line-through}
+.sound-ctl input[type=range]{width:110px;accent-color:var(--accent)}
+body:not(.pilot) .sound-ctl{display:none}
+@media (max-width:720px){body.pilot .modes{grid-template-columns:1fr}}
+body.pilot #view-write>.view-head .eyebrow,body.pilot #lessonTitle{display:none}
+body.pilot .wrap{padding-block:8px 24px;padding-inline:0}
+.mode:disabled:not(.running){opacity:.55;cursor:not-allowed}
+.cell.rest.lift .ch{color:var(--accent-ink)}
+
+
+
+
+</style>
+
+<script>try{var t=localStorage.getItem("flowriter-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<main class="wrap">
+  <div class="topbar">
+  <nav class="steps" aria-label="Assignment steps">
+    <button type="button" class="step teacher-only" data-go="setup" aria-current="page"><span class="sn">1</span>Setup</button>
+    <button type="button" class="step" data-go="write" aria-current="false"><span class="sn">2</span>Lesson</button>
+    <button type="button" class="step" data-go="results" id="resultsStep" aria-current="false"><span class="sn">3</span>Results</button>
+  </nav>
+    <div class="top-actions">
+      <button type="button" class="btn lock-btn" id="lockBtn"></button>
+      <button type="button" class="theme-btn" id="themeBtn" aria-label="Switch theme"></button>
+    </div>
+  </div>
+
+  <!-- ================= 1. SETUP ================= -->
+  <section class="view" id="view-setup">
+    <div class="view-head">
+      <div><h1>Assignment setup</h1><p class="note">Name the lesson, then add the words and the music. Lock it to see exactly what students see.</p></div>
+      <div class="foot-actions">
+        <span class="note" id="setupSummary"></span>
+        <button class="btn primary" type="button" data-go="write">Continue to writing<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+
+    <div class="composer">
+      <div class="composer-head"><label for="lessonName">Lesson name</label><span>Shown to students as the page title</span></div>
+      <input id="lessonName" class="name-input" type="text" maxlength="80" placeholder="e.g. Lesson 3 · Ovals: a, d, g, o" autocomplete="off">
+    </div>
+
+    <div class="composer" id="composer">
+      <div class="composer-head">
+        <label for="customWord">What to write</label>
+        <span>Press Enter to write it out</span>
+      </div>
+      <div class="composer-box">
+        <svg class="pen" viewBox="0 0 20 20" aria-hidden="true"><path d="M13.5 3.5l3 3L7 16H4v-3z M11.5 5.5l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        <textarea id="customWord" rows="1" maxlength="300" placeholder="Type a word, a sentence, or a whole paragraph…" autocomplete="off" spellcheck="false"></textarea>
+        <button type="button" class="composer-clear" id="customClear" aria-label="Clear text" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="composer-foot">
+        <span class="allowed">Letters A to Z and <kbd>.</kbd><kbd>,</kbd><kbd>!</kbd><kbd>?</kbd><kbd>'</kbd></span>
+        <span class="meta"><span id="charCount">0 / 300</span> · <span id="pageInfo">1 page</span></span>
+      </div>
+    </div>
+
+    <section class="panel" aria-label="Settings">
+      <h2>Pacing and scoring</h2>
+      <div class="settings-grid">
+        <div class="ctl">
+          <div class="ctl-row"><label for="bpm">Tempo</label><span class="val" id="bpmVal">84 BPM</span></div>
+          <input id="bpm" type="range" min="20" max="320" step="1" value="84">
+          <small>Slower tempos give younger writers more time per stroke.</small>
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><label for="tol">Margin of error</label><span class="val" id="tolVal">18% of x-height</span></div>
+          <input id="tol" type="range" min="6" max="40" step="1" value="18">
+          <small>How far the child's line can stray from the model and still count. Drag it after an attempt to see strokes re-score.</small>
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><label id="gateLbl">Practice help</label></div>
+          <div class="seg" role="group" aria-labelledby="gateLbl">
+            <button type="button" data-gate="hold" aria-pressed="true">Waits</button>
+            <button type="button" data-gate="duck" aria-pressed="false">Quiets</button>
+            <button type="button" data-gate="off" aria-pressed="false">None</button>
+          </div>
+          <label class="inline" style="margin-top:6px"><input type="checkbox" id="gateFade" checked> Fade the help as the word is practised</label>
+          <small>Waits: the music stops until the pen is back. Quiets: it keeps playing but thins out. Fading moves from waits to quiets to none, so the writing does not lean on the music.</small>
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><label id="bpsLbl">Beats per stroke</label></div>
+          <div class="seg" role="group" aria-labelledby="bpsLbl">
+            <button type="button" data-bps="1" aria-pressed="true">1 beat</button>
+            <button type="button" data-bps="2" aria-pressed="false">2 beats</button>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-row"><label id="restLbl">Rest for each space</label></div>
+          <div class="seg" role="group" aria-labelledby="restLbl">
+            <button type="button" data-rest="0" aria-pressed="false">None</button>
+            <button type="button" data-rest="1" aria-pressed="true">1 beat</button>
+            <button type="button" data-rest="2" aria-pressed="false">2 beats</button>
+          </div>
+          <small>Gives the writer time to lift the pen and move to the next word.</small>
+        </div>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="showBand" checked> Show margin band</label>
+        <label><input type="checkbox" id="showLabels"> Label every stroke</label>
+        <label><input type="checkbox" id="sound" checked> Music on</label>
+      </div>
+    </section>
+
+    <section class="panel music" id="musicPanel" aria-label="Music">
+      <div class="music-head">
+        <div><h2>Music</h2><p class="note">Strokes land on the beats of whatever is playing.</p></div>
+        <div class="seg" role="group" aria-label="Music source">
+          <button type="button" data-src="synth" aria-pressed="true">Built-in beat</button>
+          <button type="button" data-src="track" aria-pressed="false">My track</button>
+        </div>
+      </div>
+      <div id="trackUI" class="track-ui" hidden>
+        <div class="track-row">
+          <label class="btn" for="trackFile" id="uploadLbl"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 11V2.5M4.5 6 8 2.5 11.5 6M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Upload MP3</label>
+          <input id="trackFile" class="sr-only" type="file" accept="audio/*,.mp3,.wav,.m4a">
+          <span class="note" id="trackName">No track yet. MP3, WAV or M4A, or drop a file on this panel.</span>
+        </div>
+        <div class="track-grid">
+          <div class="ctl">
+            <div class="ctl-row"><label for="trackBpm">Track BPM</label></div>
+            <div class="nudge">
+              <input id="trackBpm" class="num" type="number" min="1" step="0.1" value="100">
+              <button type="button" id="bpmHalf" title="Half tempo">½×</button>
+              <button type="button" id="bpmDouble" title="Double tempo">2×</button>
+              <button type="button" id="bpmDetect">Detect</button>
+            </div>
+            <small id="bpmStatus">Detected automatically when you upload. If it feels twice as fast or slow, use ½× or 2×. Above about 110 BPM, try 2 beats per stroke.</small>
+          </div>
+          <div class="ctl">
+            <div class="ctl-row"><label for="trackOffset">First beat at</label><span class="val" id="offVal">auto</span></div>
+            <div class="nudge">
+              <button type="button" data-nudge="-0.05">−50 ms</button><button type="button" data-nudge="-0.01">−10</button>
+              <input id="trackOffset" class="num" type="number" min="0" step="0.01" value="0" aria-label="First beat time in seconds">
+              <button type="button" data-nudge="0.01">+10</button><button type="button" data-nudge="0.05">+50 ms</button>
+            </div>
+            <small>Seconds into the song where beat 1 lands. Set automatically on upload. Click the waveform to move it.</small>
+          </div>
+        </div>
+        <div class="wave-wrap"><canvas id="wave" aria-label="Waveform with the beat grid. Click to set the first beat."></canvas></div>
+        <div class="track-row">
+          <button type="button" class="btn" id="checkSync">Check sync</button>
+          <div class="metro" role="group" aria-label="Metronome">
+            <span class="metro-light" aria-hidden="true"></span>
+            <label class="inline"><input type="checkbox" id="metro" checked> Metronome</label>
+            <span class="metro-bpm" id="metroBpm">no track</span>
+            <input type="range" id="metroVol" min="0" max="100" value="70" aria-label="Metronome volume" title="Metronome volume">
+          </div>
+          <label class="inline"><input type="checkbox" id="ticks"> Stroke ticks</label>
+          <span class="note" id="trackInfo"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel test-admin" id="testAdmin" hidden>
+      <div><h2>Test attempt</h2><p class="note" id="testAdminNote"></p></div>
+      <button type="button" class="btn" id="resetTest">Reset test attempt</button>
+    </section>
+
+    <section class="how">
+      <div><h3>Letter → strokes</h3><p>Each letter is stored as an ordered list of strokes (lead-in, oval, downstroke, exit). Strokes join end to end, so a word is one continuous path cut at teaching points. Dots and crosses (i, j, t, x) come last, after the word is written. The pen lifts between words, and after capitals that don't join (B D F H I O P S T V W).</p></div>
+      <div><h3>Strokes → beats</h3><p>After a 4-beat count-in (the song's first 4 beats when you use your own track), each stroke owns a window of <code>b</code> beats, and each space between words is a rest of <code>r</code> beats with no stroke. The glowing dot travels the stroke at exactly that pace. In Practice, lift the pen or wander off the path and the music stops right there; put the pen back on the path and it carries on. In Test, the music keeps going no matter what. Rests play through on their own so there is time to move to the next word.</p></div>
+      <div><h3>Valid trace</h3><p>Ink is matched to the stroke whose window it fell in. A stroke is valid when ≥80% of the ink sits inside the margin, ≥70% of the stroke is covered, and ≥60% of the ink was on time.</p></div>
+    </section>
+  </section>
+
+  <!-- ================= 2. WRITE ================= -->
+  <section class="view" id="view-write" hidden>
+    <div class="view-head">
+      <div><p class="eyebrow">Assignment</p><h1 id="lessonTitle">Untitled lesson</h1><p class="note" id="writeHint"></p></div>
+    </div>
+
+    <div class="modes" role="group" aria-label="Writing mode">
+      <button type="button" class="mode" id="demoBtn">
+        <span class="mt"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 5.5v5l4-2.5z" fill="currentColor"/></svg>Watch demo</span>
+        <span class="md">See the pace first. Watch as many times as you like.</span>
+        <span class="badge" id="demoBadge">Start here</span>
+      </button>
+      <button type="button" class="mode" id="pracBtn">
+        <span class="mt"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 12.5l2-5 6-4.5 2 2-4.5 6z M3 12.5l3.5-1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>Practice</span>
+        <span class="md" id="pracMd">The music follows your pen. It stops when you lift and waits for you.</span>
+      </button>
+      <button type="button" class="mode" id="testBtn">
+        <span class="mt"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 12.5V4l7-1.5v8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="4.5" cy="12.5" r="1.8" fill="currentColor"/><circle cx="11.5" cy="11" r="1.8" fill="currentColor"/></svg><span id="testTitle">Test</span></span>
+        <span class="md" id="testMd">You follow the music. It keeps going no matter what. One try only.</span>
+      </button>
+      <button type="button" class="mode" id="checkBtn">
+        <span class="mt"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 12.5l2-5 6-4.5 2 2-4.5 6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M2.5 14.5h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>On your own</span>
+        <span class="md">No music and no beat. Write it at your own pace. This is the one that shows what you have learned.</span>
+      </button>
+    </div>
+
+    <div class="write-bar">
+      <span class="note" id="writeWord"></span>
+      <button class="btn primary" id="checkDone" type="button" hidden>Score my writing</button>
+      <!-- FW-THEMES:BEGIN -->
+      <label class="skin-pick">
+        <span class="sw" aria-hidden="true"></span>
+        <select id="skinSel" aria-label="Writing surface">
+          <option value="">Plain paper</option>
+        <option value="classroom">Classroom</option>
+        <option value="space">Space station</option>
+        <option value="treehouse">Treehouse</option>
+        <option value="submarine">Submarine</option>
+        <option value="study">Wizard study</option>
+        <option value="studio">Art studio</option>
+        <option value="campfire">Night camp</option>
+        </select>
+      </label>
+      <!-- FW-THEMES:END -->
+      <button class="btn" id="clearBtn" type="button">Clear</button>
+    </div>
+
+    <div id="stageSlotW">
+      <section class="stage" id="stage">
+        <canvas id="pad" aria-label="Tracing area. Draw with a finger, stylus or mouse."></canvas>
+        <div class="hud">
+          <span class="pill" id="hudLeft">Sample attempt</span>
+          <span class="pill" id="hudPen"><span class="dot"></span><span id="hudPenTxt">Pen up</span></span>
+        </div>
+        <div class="pager" id="pager" hidden>
+          <button type="button" class="pg-btn" id="pgPrev" aria-label="Previous page"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="pg-mid" aria-live="polite"><span id="pageTxt">Page 1 of 1</span><span class="pg-dots" id="pgDots" aria-hidden="true"></span></div>
+          <button type="button" class="pg-btn" id="pgNext" aria-label="Next page"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </section>
+    </div>
+
+    <div class="wave-wrap" id="waveWWrap" hidden>
+      <div class="wave-head"><span class="metro-light" aria-hidden="true"></span><span id="waveWName"></span></div>
+      <canvas id="waveW" aria-label="Waveform of your track with the beat grid"></canvas>
+    </div>
+
+    <div id="mapSlotW">
+      <section class="beatmap" id="beatmap">
+        <div class="beatmap-head">
+          <h2>Beat map</h2>
+          <p id="beatmapNote">4-beat count-in, then one stroke per beat. Tap a stroke to inspect it.</p>
+        </div>
+        <div class="lane-scroll"><div class="lane" id="lane"></div></div>
+      </section>
+    </div>
+
+    <div class="foot-actions">
+      <button class="btn teacher-only" type="button" data-go="setup">Back to setup</button>
+      <button class="btn" type="button" data-go="results" id="seeResults">See test results<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+  </section>
+
+  <!-- ================= 3. RESULTS ================= -->
+  <section class="view" id="view-results" hidden>
+    <div class="view-head">
+      <div><p class="eyebrow" id="lessonTitleR"></p><h1>Test results</h1><p class="note">The test is submitted and can't be taken again. You can still watch the demo and practice.</p><p class="run" id="runInfo"></p></div>
+      <div class="foot-actions">
+        <button class="btn" type="button" data-go="write">Back to lesson</button>
+      </div>
+    </div>
+
+    <div class="res-top">
+      <section class="panel" aria-label="Score" aria-live="polite">
+        <div class="score"><span class="big" id="scoreBig">0</span><span class="of" id="scoreOf">of 12 strokes valid</span></div>
+        <div class="meter" id="meter" aria-hidden="true"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+      <section class="panel" aria-label="Breakdown">
+        <h2>Across all traced strokes</h2>
+        <div class="metrics" id="avgs"></div>
+        <div class="issues" id="issues"></div>
+      </section>
+    </div>
+
+    <div id="stageSlotR"></div>
+    <div id="mapSlotR"></div>
+
+    <div class="lower">
+      <section class="panel" aria-label="Stroke detail"><div class="insp" id="insp"></div></section>
+      <section class="panel" aria-label="Letters to work on">
+        <h2>Letters to work on</h2>
+        <div class="letters" id="letters"></div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+/*__LETTERS__*/
+const SLANT = 0.3, COUNT_IN = 4, TOP = 2.2, LINE_H = 3.9, SPACE = .9, LINES_PER_PAGE = 3;
+const RULES = {pass:.7, onTime:.6, dir:.5}; // a stroke counts at 70%; drawn more backwards than forwards = wrong direction
+const TRAVEL = 1; // beats to lift the pen and get to a dot, a cross, or the letter after a capital that doesn't join
+// Fixed writing size: the x-height in CSS pixels never depends on how much text there is.
+const LV = () => [S.sound?.5*S.vol:0, S.sound?S.vol:0]; // [beat and cues, song] at the student's volume
+const XH = w => w>=760?48:w>=520?38:30;
+const LIFT_GRACE=.75; // Practice: lifting in the last quarter of a stroke lets the music run to the next stroke, then it waits
+const MODE_NAME={practice:'Practice',test:'Test with music',demo:'Demo',check:(window.__FW?'Test':'On your own')};
+const GATE_FADE=['hold','hold','duck','duck','off']; // the help fades as the same word is practised
+const DUCK_VOL=.22; // "quiets": the music keeps going but thins out when the pen leaves the path
+
+// ---------- State ----------
+// S.mode while playing: 'practice' (music follows the pen), 'test' (pen follows the music) or 'demo'
+const S = {word:'hello', bpm:84, src:'synth', track:null, ticks:false, metro:true, metroVol:.7, bps:1, rest:1, next:-1, lastWhole:-1, tol:.18, band:true, labels:false, sound:true, vol:1, left:false,
+  strokes:[], points:[], seg:0, page:0, pages:1, rows:1, playing:false, mode:null, sample:false, selected:-1,
+  beat:-1, active:-1, penDown:false, penStatus:null, finished:false,
+  flow:false, anchorBeat:0, anchorT:0, pen:null, offSince:null, reach:{}, pauses:0,
+  gateSet:'hold', gate:'hold', fade:true, practiceRuns:0, checking:false, attemptUntimed:false, ducked:false,
+  view:'setup', lastRun:null, demoWatched:false,
+  lesson:'', locked:false, testDone:false, testSnap:null, testMode:false};
+// When the FloWriter app embeds this page it passes a config. The page then runs as one lesson:
+// watch the demo, practice with the music, then one graded test with no music.
+const HOST = window.__FW || null;
+const PILOT = !!HOST;
+function emit(m){ if(HOST&&window.parent!==window) window.parent.postMessage(Object.assign({fw:1,ch:HOST.ch},m),'*'); }
+
+// ---------- Geometry ----------
+const dist=(a,b)=>Math.hypot(b[0]-a[0],b[1]-a[1]);
+function crSeg(p0,p1,p2,p3,n,out,skipFirst){
+  const d=(a,b)=>Math.max(1e-4,Math.sqrt(dist(a,b)));
+  const t0=0,t1=t0+d(p0,p1),t2=t1+d(p1,p2),t3=t2+d(p2,p3);
+  const L=(a,b,ta,tb,t)=>[(tb-t)/(tb-ta)*a[0]+(t-ta)/(tb-ta)*b[0],(tb-t)/(tb-ta)*a[1]+(t-ta)/(tb-ta)*b[1]];
+  for(let i=skipFirst?1:0;i<=n;i++){
+    const t=t1+(t2-t1)*i/n;
+    const A1=L(p0,p1,t0,t1,t),A2=L(p1,p2,t1,t2,t),A3=L(p2,p3,t2,t3,t);
+    const B1=L(A1,A2,t0,t2,t),B2=L(A2,A3,t1,t3,t);
+    out.push(L(B1,B2,t1,t2,t));
+  }
+}
+function resample(pts,step){
+  const out=[pts[0].slice()]; let acc=0, prev=pts[0];
+  for(let i=1;i<pts.length;i++){
+    const cur=pts[i]; let seg=dist(prev,cur);
+    while(acc+seg>=step && seg>0){
+      const r=(step-acc)/seg; const np=[prev[0]+(cur[0]-prev[0])*r,prev[1]+(cur[1]-prev[1])*r];
+      out.push(np); prev=np; seg=dist(prev,cur); acc=0;
+    }
+    acc+=seg; prev=cur;
+  }
+  const last=pts[pts.length-1];
+  if(dist(out[out.length-1],last)>step*.3) out.push(last.slice()); else out[out.length-1]=last.slice();
+  return out;
+}
+const wordWidth=w=>[...w].reduce((a,ch)=>a+LETTERS[ch].w,0);
+function wrapLines(text,maxW){
+  const lines=[]; let cur=[], curW=0;
+  text.split(' ').filter(Boolean).forEach(w=>{
+    const ww=wordWidth(w);
+    if(cur.length&&curW+SPACE+ww>maxW){ lines.push(cur); cur=[]; curW=0; }
+    curW+=(cur.length?SPACE:0)+ww; cur.push(w);
+  });
+  if(cur.length) lines.push(cur);
+  return lines;
+}
+function buildWord(text){
+  const strokes=[]; let li=0, wi=-1;
+  const lines=wrapLines(text,S.wrap);
+  lines.forEach((words,ln)=>{
+    // every page reuses the same rows, so page 2 is drawn exactly where page 1 was
+    const page=Math.floor(ln/LINES_PER_PAGE), row=ln%LINES_PER_PAGE;
+    const yoff=-row*LINE_H; let x=0;
+    words.forEach(word=>{
+      const lifts=[]; let prevEy=.1, prevJoin=false; const firstWord=!strokes.length; wi++;
+      [...word].forEach((ch,ci)=>{
+        const L=LETTERS[ch], startLift=!prevJoin||!!L.cap||!!L.punct;
+        L.s.forEach((s,si)=>{
+          const ctrl=s.p.map(p=>[p[0],p[1]]);
+          if(si===0&&!startLift){
+            ctrl[0]=[0,prevEy];
+            if(prevEy>.5){ let e=1; while(e<ctrl.length-1&&ctrl[e][1]<.55) e++; ctrl.splice(1,e-1); } // high join after b, o, v, w
+          }
+          const lift=si===0?startLift:!!s.lift;
+          const defer=!!s.lift&&!L.cap&&!L.punct; // lowercase dots and crosses wait until the word is written
+          const st={ch,li,si,of:L.s.length,name:s.n,j:lift?false:(si===0?true:!!s.j),lift,line:row,page,word,
+            wi, ws:!firstWord&&ci===0&&si===0, // first stroke of a new word: a rest (the space) comes before it
+            travel:lift&&!(ci===0&&si===0), // a pen lift inside a word (dot, cross, after a capital that doesn't join)
+            ctrl:ctrl.map(p=>[p[0]+x,p[1]+yoff]),res:null};
+          (defer?lifts:strokes).push(st);
+        });
+        x+=L.w; prevEy=L.ey??.1; prevJoin=!L.nj&&!L.punct; li++;
+      });
+      strokes.push(...lifts);
+      x+=SPACE;
+    });
+  });
+  S.lines=lines.length; S.rows=Math.max(1,Math.min(lines.length,LINES_PER_PAGE));
+  S.pages=Math.max(1,Math.ceil(lines.length/LINES_PER_PAGE)); S.page=Math.min(S.page,S.pages-1);
+  const refl=(a,b)=>[2*a[0]-b[0],2*a[1]-b[1]];
+  strokes.forEach((s,k)=>{
+    const P=s.ctrl,n=P.length;
+    const before=s.j&&k>0?strokes[k-1].ctrl[strokes[k-1].ctrl.length-2]:refl(P[0],P[1]);
+    const nx=strokes[k+1]; const after=nx&&nx.j?nx.ctrl[1]:refl(P[n-1],P[n-2]);
+    const ext=[before,...P,after], raw=[];
+    for(let i=1;i<ext.length-2;i++) crSeg(ext[i-1],ext[i],ext[i+1],ext[i+2],18,raw,i>1);
+    const base=-s.line*LINE_H; // slant is measured from each line's own baseline
+    s.pts=resample(raw.map(p=>[p[0]+(p[1]-base)*SLANT,p[1]]),.015);
+    s.len=s.pts.reduce((a,p,i)=>i?a+dist(s.pts[i-1],p):0,0);
+  });
+  S.strokes=strokes; timing(); updatePager();
+  return strokes;
+}
+function nearestOn(s,x,y){
+  let best=1e9,bi=0; const P=s.pts;
+  for(let i=0;i<P.length;i++){const dx=P[i][0]-x,dy=P[i][1]-y,d=dx*dx+dy*dy; if(d<best){best=d;bi=i;}}
+  return {d:Math.sqrt(best),i:bi};
+}
+
+// ---------- Canvas / layout ----------
+const cv=document.getElementById('pad'), cx=cv.getContext('2d'), stage=document.getElementById('stage'), mainEl=document.querySelector('main');
+let W=0,H=0,scale=1,offX=0,offY=0,dpr=1;
+// The width to size the canvas to is the width the canvas actually renders at,
+// i.e. its own content box. Reading stage.clientWidth instead also counts the
+// stage's padding, and any disagreement makes the browser rescale the backing
+// store, which puts the ink a few pixels away from the pointer (worse the
+// further right you draw). The stage is hidden on the setup page, so fall back
+// to the width it will have once shown.
+const stageWidth=()=>{
+  if(cv.clientWidth){
+    const cs=getComputedStyle(cv);
+    return cv.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);
+  }
+  return stage.clientWidth||Math.max(280,mainEl.clientWidth-42);
+};
+function wrapFor(w){ const padX=Math.max(22,w*.05); return Math.max(4,(w-2*padX)/XH(w)-TOP*SLANT-.3); }
+function layout(){
+  // The letters are always XH(width) pixels tall at the x-height. More text means more lines and pages,
+  // never smaller letters. The only exception is one word too long for a line on a narrow screen.
+  W=stageWidth(); dpr=window.devicePixelRatio||1;
+  let minX=1e9,maxX=-1e9;
+  S.strokes.forEach(s=>s.pts.forEach(p=>{minX=Math.min(minX,p[0]);maxX=Math.max(maxX,p[0]);}));
+  if(!isFinite(minX)){ minX=0; maxX=1; }
+  const n=S.rows||1, Y1=2.6, Y0=-(n-1)*LINE_H-1.3, padX=Math.max(22,W*.05), bw=maxX-minX;
+  scale=XH(W);
+  if(bw*scale>W-2*padX) scale=(W-2*padX)/bw;
+  H=Math.round((Y1-Y0)*scale+40);
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.height=H+'px';
+  offX=padX-minX*scale;
+  offY=20+Y1*scale;
+}
+const X=u=>offX+u*scale, Y=v=>offY-v*scale;
+
+let C={};
+function readColors(){
+  const cs=getComputedStyle($('pad')||document.documentElement), g=n=>cs.getPropertyValue(n).trim();
+  C={sheet:g('--sheet'),ink:g('--ink'),muted:g('--muted'),rule:g('--rule'),ruleSoft:g('--rule-soft'),margin:g('--margin'),
+     accent:g('--accent'),accentWash:g('--accent-wash'),graphite:g('--graphite'),ok:g('--ok'),bad:g('--bad'),missed:g('--missed'),band:g('--band')};
+}
+function pathOf(pts,from=0,to=pts.length-1){
+  cx.beginPath(); cx.moveTo(X(pts[from][0]),Y(pts[from][1]));
+  for(let i=from+1;i<=to;i++) cx.lineTo(X(pts[i][0]),Y(pts[i][1]));
+}
+function withAlpha(hex,a){
+  if(hex.startsWith('#')&&hex.length===7){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;}
+  return hex;
+}
+
+function render(){
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  cx.fillStyle=C.sheet; cx.fillRect(0,0,W,H);
+  cx.lineCap='round'; cx.lineJoin='round';
+  // handwriting paper
+  const line=(v,col,w,dash)=>{cx.beginPath();cx.setLineDash(dash||[]);cx.strokeStyle=col;cx.lineWidth=w;cx.moveTo(0,Y(v));cx.lineTo(W,Y(v));cx.stroke();};
+  for(let l=0;l<(S.rows||1);l++){ const o=-l*LINE_H;
+    line(TOP+o,C.rule,1.5); line(1+o,C.rule,1.2,[7,7]); line(o,C.rule,1.8); line(-.9+o,C.ruleSoft,1); }
+  cx.setLineDash([]);
+  cx.beginPath(); cx.strokeStyle=C.margin; cx.lineWidth=1.5; const mx=Math.max(14,W*.035); cx.moveTo(mx,0); cx.lineTo(mx,H); cx.stroke();
+
+  const tolPx=S.tol*scale*2, k=S.active, onPg=i=>S.strokes[i]&&S.strokes[i].page===S.page;
+  // margin band
+  if(S.band){
+    cx.strokeStyle=C.band; cx.lineWidth=tolPx;
+    S.strokes.forEach(s=>{ if(s.page!==S.page) return; pathOf(s.pts);cx.stroke();});
+  }
+  // active corridor
+  if(S.playing && k>=0 && k<S.strokes.length && onPg(k)){
+    cx.strokeStyle=C.accentWash; cx.lineWidth=tolPx; pathOf(S.strokes[k].pts); cx.stroke();
+  }
+  // model strokes
+  const mw=Math.max(2.5,.045*scale);
+  const restingNow = S.playing && k<0 && S.beat>=COUNT_IN && S.next>=0;
+  const nextWord = restingNow ? S.strokes[S.next].wi : -1;
+  S.strokes.forEach((s,i)=>{
+    if(s.page!==S.page) return;
+    let col=C.muted, dash=[2,7], w=mw*.8, a=.75;
+    if(s.res){ col=s.res.status==='valid'?C.ok:s.res.status==='missed'?C.missed:C.bad; dash=[]; w=mw; a=.55; }
+    else if(!S.playing && !S.sample){ dash=[]; col=C.muted; a=.45; w=mw; }
+    if(S.playing && i===k){ col=C.accent; dash=[]; w=mw*1.5; a=1; }
+    else if(S.playing && i===(k>=0?k+1:S.next)){ col=C.accent; dash=[3,6]; a=.6; }
+    else if(restingNow && s.wi===nextWord && !s.res){ col=C.accent; dash=[3,6]; a=.45; } // preview the whole next word during a rest
+    cx.globalAlpha=a; cx.setLineDash(dash); cx.strokeStyle=col; cx.lineWidth=w; pathOf(s.pts); cx.stroke();
+    cx.globalAlpha=1; cx.setLineDash([]);
+  });
+  // selected stroke outline
+  if(S.selected>=0 && !S.playing && onPg(S.selected)){
+    const s=S.strokes[S.selected];
+    const col=s.res?(s.res.status==='valid'?C.ok:s.res.status==='missed'?C.missed:C.bad):C.ink;
+    cx.strokeStyle=col; cx.lineWidth=tolPx; cx.globalAlpha=.16; pathOf(s.pts); cx.stroke(); cx.globalAlpha=1;
+    cx.lineWidth=mw*1.3; cx.globalAlpha=.9; pathOf(s.pts); cx.stroke(); cx.globalAlpha=1;
+  }
+  // stroke labels
+  const labelIdx = S.labels ? S.strokes.map((_,i)=>i) : (S.playing ? [k,k>=0?k+1:S.next].filter(i=>i>=0&&i<S.strokes.length) : (S.selected>=0?[S.selected]:[]));
+  labelIdx.filter(onPg).forEach(i=>drawLabel(i, S.playing&&i===k));
+  // user ink
+  drawInk();
+  // pacer
+  const resting = S.playing && k<0 && S.beat>=COUNT_IN && S.next>=0;
+  if(S.playing && ((k>=0 && k<S.strokes.length) || resting) && onPg(resting?S.next:k)){
+    // during a rest the dot waits (hollow) at the start of the next word
+    const s=S.strokes[resting?S.next:k], p=resting?0:Math.min(1,Math.max(0,(S.beat-s.b0)/S.bps)), pt=s.pts[Math.round(p*(s.pts.length-1))];
+    const waiting=!resting&&!S.flow; // Practice only: music is stopped here until the pen comes back
+    const beatFrac=waiting?(performance.now()/900)%1:S.beat-Math.floor(S.beat), pulse=reduceMotion?0:Math.max(0,1-beatFrac*(waiting?1.4:2.2));
+    const hollow=resting||waiting;
+    cx.beginPath(); cx.fillStyle=withAlpha(C.accent,resting?.12:.25); cx.arc(X(pt[0]),Y(pt[1]),10+pulse*14,0,Math.PI*2); cx.fill();
+    cx.beginPath(); cx.fillStyle=hollow?C.sheet:C.accent; cx.arc(X(pt[0]),Y(pt[1]),7,0,Math.PI*2); cx.fill();
+    cx.beginPath(); cx.strokeStyle=hollow?C.accent:C.sheet; cx.lineWidth=2; cx.arc(X(pt[0]),Y(pt[1]),7,0,Math.PI*2); cx.stroke();
+    const px=X(pt[0]), py=Y(pt[1]);
+    if(resting){
+      // closing ring: shrinks onto the start point and lands exactly on the beat the next word begins
+      const gap=s.gap||S.rest, remaining=Math.max(0,s.b0-S.beat), frac=Math.min(1,remaining/Math.max(1,gap));
+      const R=9+frac*Math.max(46,scale*.85);
+      cx.beginPath(); cx.strokeStyle=C.accent; cx.globalAlpha=.35+.65*(1-frac); cx.lineWidth=3; cx.arc(px,py,R,0,Math.PI*2); cx.stroke(); cx.globalAlpha=1;
+      const newPage=S.next>0&&S.strokes[S.next-1].page!==s.page;
+      drawTag(px,py,remaining>gap*.5&&gap>0?(s.travel?liftWhat(s):newPage?'New page · lift your pen':'Lift your pen'):'Ready…',false);
+    } else if(waiting){
+      drawTag(px,py,k===0&&S.beat===s.b0?'Pen here to start the music':'Pen here to keep playing',true);
+    } else {
+      const sk=S.strokes[k], since=S.beat-sk.b0;
+      if(sk.ws && since<.6) { cx.globalAlpha=1-since/.6*.7; drawTag(px,py,'Go!',true); cx.globalAlpha=1; }
+    }
+  }
+  // count-in
+  if(S.playing && S.beat>=0 && S.beat<COUNT_IN){
+    const n=COUNT_IN-Math.floor(S.beat), f=S.beat-Math.floor(S.beat);
+    cx.save(); cx.globalAlpha=1-f*.6; cx.fillStyle=C.accent; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.font=`800 ${Math.round(Math.min(H*.45,160))}px "Bricolage Grotesque", system-ui, sans-serif`;
+    cx.fillText(String(n), W-Math.min(W*.12,110), H*.52); cx.restore();
+  }
+}
+const liftWhat=s=>s.name==='dot'?`Lift · dot the ${s.ch}`:/cross/.test(s.name)?`Lift · cross the ${s.ch}`:'Lift your pen';
+function drawTag(px,py,text,solid){
+  cx.save();
+  cx.font=`700 ${solid?16:14}px "Atkinson Hyperlegible", system-ui, sans-serif`;
+  const tw=cx.measureText(text).width, h=solid?30:26, w=tw+22;
+  // above the pen, on the side away from the writing hand (right-handers: left; left-handers: right)
+  let x=S.left?px+16:px-16-w, y=py-h-18;
+  if(x+w>W-8) x=px-16-w; if(x<8) x=px+16; if(y<8) y=py+18;
+  cx.beginPath(); cx.roundRect?cx.roundRect(x,y,w,h,h/2):cx.rect(x,y,w,h);
+  cx.fillStyle=solid?C.accent:C.sheet; cx.fill();
+  cx.lineWidth=1.5; cx.strokeStyle=C.accent; cx.stroke();
+  cx.fillStyle=solid?'#231500':C.ink; cx.textAlign='left'; cx.textBaseline='middle';
+  cx.fillText(text,x+11,y+h/2+1);
+  cx.restore();
+}
+function drawLabel(i,hot){
+  const s=S.strokes[i]; const P=s.pts, a=P[0];
+  // start dot
+  cx.beginPath(); cx.fillStyle=hot?C.accent:C.ink; cx.arc(X(a[0]),Y(a[1]),hot?5:3.5,0,Math.PI*2); cx.fill();
+  // arrow along direction near start
+  const m=Math.min(P.length-1,Math.max(6,Math.round(P.length*.18))), m2=Math.min(P.length-1,m+3);
+  const ang=Math.atan2(-(P[m2][1]-P[m][1]),P[m2][0]-P[m][0]), ax=X(P[m2][0]), ay=Y(P[m2][1]), r=hot?9:7;
+  cx.beginPath(); cx.fillStyle=hot?C.accent:C.ink; cx.globalAlpha=hot?1:.7;
+  cx.moveTo(ax+Math.cos(ang)*r,ay+Math.sin(ang)*r);
+  cx.lineTo(ax+Math.cos(ang+2.5)*r*.8,ay+Math.sin(ang+2.5)*r*.8);
+  cx.lineTo(ax+Math.cos(ang-2.5)*r*.8,ay+Math.sin(ang-2.5)*r*.8); cx.closePath(); cx.fill(); cx.globalAlpha=1;
+  // number badge, offset from the path
+  const mid=P[Math.round(P.length*.5)], q=P[Math.min(P.length-1,Math.round(P.length*.5)+2)];
+  let nx=-(q[1]-mid[1]), ny=q[0]-mid[0]; const nl=Math.hypot(nx,ny)||1; nx/=nl; ny/=nl;
+  const off=S.tol+.16, bx=X(mid[0]+nx*off), by=Y(mid[1]+ny*off);
+  cx.beginPath(); cx.fillStyle=hot?C.accent:C.sheet; cx.strokeStyle=hot?C.accent:C.ink; cx.lineWidth=1.2; cx.arc(bx,by,10,0,Math.PI*2); cx.fill(); cx.stroke();
+  cx.fillStyle=hot?'#231500':C.ink; cx.font='500 11px "DM Mono", ui-monospace, monospace'; cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText(String(s.si+1),bx,by+.5);
+}
+function drawInk(){
+  const P=S.points; if(!P.length) return;
+  const w=Math.max(3,.06*scale);
+  cx.lineWidth=w;
+  for(let i=1;i<P.length;i++){
+    const a=P[i-1], b=P[i]; if(a.seg!==b.seg||b.pg!==S.page) continue;
+    const inside = b.k>=0 && b.d<=S.tol;
+    cx.strokeStyle = b.k<0 ? C.missed : inside ? C.graphite : C.bad;
+    cx.beginPath(); cx.moveTo(X(a.x),Y(a.y)); cx.lineTo(X(b.x),Y(b.y)); cx.stroke();
+  }
+}
+
+// ---------- Scoring ----------
+// Beat timing: strokes take S.bps beats each; every space between words is a rest of S.rest beats.
+function timing(){
+  let b=COUNT_IN; S.restBeats=new Set(); S.goBeats=new Set(); S.travelBeats=new Set(); S.startAt=new Map();
+  S.strokes.forEach((s,i)=>{
+    s.gap=0;
+    if(s.ws){ for(let r=0;r<S.rest;r++) S.restBeats.add(b+r); b+=S.rest; S.goBeats.add(b); s.gap=S.rest; }
+    else if(s.travel){ for(let r=0;r<TRAVEL;r++) S.travelBeats.add(b+r); b+=TRAVEL; s.gap=TRAVEL; } // one beat to lift and reach the dot or cross
+    s.b0=b; S.startAt.set(b,i); b+=S.bps;
+  });
+  S.total=b;
+}
+function windowOf(k){ const ws=S.strokes[k].b0; return [ws,ws+S.bps]; }
+function strokeAt(beat){ for(let i=0;i<S.strokes.length;i++){ const s=S.strokes[i]; if(beat>=s.b0&&beat<s.b0+S.bps) return i; } return -1; }
+function nextAfter(beat){ for(let i=0;i<S.strokes.length;i++) if(S.strokes[i].b0>beat) return i; return -1; }
+function assign(pt){
+  if(pt.pg==null) pt.pg=S.page; // ink only ever counts toward strokes on the page it was drawn on
+  if(pt.t==null){ // free trace: nearest stroke anywhere on this page
+    let best={d:1e9,k:-1}; S.strokes.forEach((s,k)=>{ if(s.page!==pt.pg) return; const r=nearestOn(s,pt.x,pt.y); if(r.d<best.d) best={d:r.d,k};});
+    pt.k=best.k; pt.d=best.d; return;
+  }
+  const g=.3*S.bps; let best={d:1e9,k:-1};
+  S.strokes.forEach((s,k)=>{ if(s.page!==pt.pg) return; const [a,b]=windowOf(k); if(pt.t>=a-g&&pt.t<b+g){ const r=nearestOn(s,pt.x,pt.y); if(r.d<best.d) best={d:r.d,k}; } });
+  pt.k=best.k; pt.d=best.k>=0?best.d:1e9;
+}
+// Every stroke scores 0 to 1 from how far the pen was from the model line at every point:
+//   path = for each point along the model stroke, how close the nearest ink came (skipped parts score 0)
+//   ink  = for each point the child drew, how close it is to the line
+// Closeness: full credit within 35% of the margin, half credit at the margin's edge, nothing at twice the margin.
+// A stroke drawn backwards scores 0 however close to the line it is.
+function closeness(d){
+  const t=S.tol, a=t*.35, b=t, c=t*2;
+  if(d<=a) return 1; if(d<=b) return 1-.5*(d-a)/(b-a); if(d<=c) return .5*(1-(d-b)/(c-b)); return 0;
+}
+function direction(s,pts){
+  // share of the pen's travel along the stroke that went forward. Closed shapes (a, o, the oval in d)
+  // start and end at the same spot, so a big jump in the nearest point re-anchors instead of counting.
+  const n=s.pts.length; if(s.len<.35||pts.length<4) return null;
+  let fw=0,bw=0,prev=null,seg=null;
+  for(const p of pts){
+    if(p.d>S.tol*2) continue;
+    const i=nearestOn(s,p.x,p.y).i;
+    if(prev!=null&&p.seg===seg){ const di=i-prev; if(Math.abs(di)<=n*.25){ if(di>0) fw+=di; else bw-=di; } }
+    prev=i; seg=p.seg;
+  }
+  const tot=fw+bw; return tot<n*.15?null:fw/tot;
+}
+function evaluate(k){
+  // Test runs have no beat, so timing is not part of any score. Practice also reports "on the beat" for information.
+  const untimed=S.attemptUntimed;
+  const s=S.strokes[k], pts=S.points.filter(p=>p.k===k&&(untimed||p.t!=null));
+  if(pts.length<(s.len<.25?1:3)){ s.res={status:'missed',score:0,path:0,ink:0,dir:null,onTime:untimed?null:0,n:pts.length,untimed}; return; }
+  const ink=pts.reduce((a,p)=>a+closeness(p.d),0)/pts.length;
+  let path=0;
+  for(const m of s.pts){ let best=1e9; for(const p of pts){ const dx=p.x-m[0],dy=p.y-m[1],d=dx*dx+dy*dy; if(d<best) best=d; } path+=closeness(Math.sqrt(best)); }
+  path/=s.pts.length;
+  const dir=direction(s,pts), reversed=dir!=null&&dir<RULES.dir;
+  let onTime=null;
+  if(!untimed){ const [a,b]=windowOf(k); onTime=pts.filter(p=>p.t>=a-.1*S.bps&&p.t<b+.1*S.bps).length/pts.length; }
+  const score=reversed?0:.6*path+.4*ink;
+  s.res={status:reversed?'reversed':score>=RULES.pass?'valid':'off',score,path,ink,dir,onTime,n:pts.length,untimed};
+}
+const attemptScore=()=>{ const N=S.strokes.length; return N?S.strokes.reduce((a,s)=>a+(s.res?s.res.score:0),0)/N:0; };
+function rescoreAll(){ S.strokes.forEach((s,k)=>{ if(s.res) evaluate(k); }); }
+
+// ---------- Simulated pen (sample + demo) ----------
+function sloppyIndex(){ const n0=S.strokes.filter(s=>s.page===0).length; return Math.min(n0-1,Math.floor(n0*.55)); }
+function penAt(k,p){
+  const s=S.strokes[k], P=s.pts, i=Math.min(P.length-2,Math.max(0,Math.round(p*(P.length-1))));
+  const a=P[i], b=P[i+1]; let nx=-(b[1]-a[1]), ny=b[0]-a[0]; const l=Math.hypot(nx,ny)||1; nx/=l; ny/=l;
+  const off = k===sloppyIndex()
+    ? .36*Math.sin(Math.PI*p)*(1+.15*Math.sin(p*11))
+    : .055*(Math.sin(p*9+k*1.7)*.6+Math.sin(p*23+k*.9)*.4);
+  return [a[0]+nx*off, a[1]+ny*off];
+}
+function freshModel(){ if(PILOT){ clearAttempt(); S.lastRun=null; } else makeSample(); }
+function makeSample(){
+  clearAttempt(true);
+  let seg=++S.seg;
+  S.strokes.forEach((s,k)=>{
+    if(s.lift) seg=++S.seg;
+    const [a]=windowOf(k), M=Math.max(24,Math.round(s.pts.length*.5));
+    for(let i=0;i<=M;i++){ const p=i/M, q=penAt(k,p); const pt={x:q[0],y:q[1],t:a+p*S.bps*.97,seg,pg:s.page}; assign(pt); S.points.push(pt); }
+  });
+  S.strokes.forEach((_,k)=>evaluate(k));
+  S.sample=true; S.finished=true; S.lastRun=null;
+  const firstBad=S.strokes.findIndex(s=>s.res.status!=='valid');
+  S.selected=firstBad>=0?firstBad:0;
+  setPage(0);
+}
+
+// ---------- Audio ----------
+let trackGain=null, trackNode=null, flowOut=null, flowMetro=null, checkTimer=null, checkRaf=0;
+let actx=null, master=null, metroGain=null, schedId=null, nextT=0, nextBeat=0, endBeat=0, spb=60/84, noiseBuf=null, demoSeg=0;
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function ensureAudio(){
+  try{
+    if(!actx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; actx=new AC();
+      master=actx.createGain(); master.connect(actx.destination);
+      trackGain=actx.createGain(); trackGain.connect(actx.destination);
+      metroGain=actx.createGain(); metroGain.connect(master); }
+    metroGain.gain.value=S.metroVol;
+    master.gain.value=LV()[0]; trackGain.gain.value=LV()[1];
+    if(actx.state==='suspended') actx.resume();
+  }catch(e){ actx=null; }
+}
+const clock=()=>actx?actx.currentTime:performance.now()/1000;
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+function getNoise(){
+  if(!noiseBuf){ noiseBuf=actx.createBuffer(1,actx.sampleRate*.5,actx.sampleRate); const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; }
+  return noiseBuf;
+}
+function tone(f,t,dur,type,vol,att=.005,dest=flowOut||master){
+  const o=actx.createOscillator(),g=actx.createGain(); o.type=type; o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+att); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(dest); o.start(t); o.stop(t+dur+.05);
+}
+function kick(t){
+  const o=actx.createOscillator(),g=actx.createGain(); o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(45,t+.12);
+  g.gain.setValueAtTime(.9,t); g.gain.exponentialRampToValueAtTime(.001,t+.28); o.connect(g).connect(flowOut||master); o.start(t); o.stop(t+.3);
+}
+function noise(t,dur,vol,hp){
+  const s=actx.createBufferSource(),f=actx.createBiquadFilter(),g=actx.createGain(); s.buffer=getNoise(); f.type='highpass'; f.frequency.value=hp;
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur); s.connect(f).connect(g).connect(flowOut||master); s.start(t); s.stop(t+dur+.02);
+}
+// Metronome: a woodblock-style click (filtered noise transient + short pitched blip), accented on beat 1 of each bar
+function metroClick(t,accent,dest){
+  dest=dest||flowMetro||metroGain;
+  const s=actx.createBufferSource(), f=actx.createBiquadFilter(), g=actx.createGain();
+  s.buffer=getNoise(); f.type='bandpass'; f.frequency.value=accent?3200:2400; f.Q.value=4;
+  g.gain.setValueAtTime(accent?1.1:.8,t); g.gain.exponentialRampToValueAtTime(.001,t+.03);
+  s.connect(f).connect(g).connect(dest); s.start(t); s.stop(t+.04);
+  const o=actx.createOscillator(), og=actx.createGain(); o.type='sine'; o.frequency.setValueAtTime(accent?1760:1320,t);
+  og.gain.setValueAtTime(0,t); og.gain.linearRampToValueAtTime(accent?.5:.32,t+.001); og.gain.exponentialRampToValueAtTime(.001,t+.06);
+  o.connect(og).connect(dest); o.start(t); o.stop(t+.08);
+}
+function metroLight(beat){
+  const on=beat!=null&&beat>=0&&beat-Math.floor(beat)<.14, acc=on&&Math.floor(beat)%4===0;
+  document.querySelectorAll('.metro-light').forEach(el=>{ el.classList.toggle('on',on); el.classList.toggle('acc',acc); });
+}
+const PROG=[[48,[60,64,67]],[45,[57,60,64]],[41,[57,60,65]],[43,[55,59,62]]]; // C  Am  F  G
+function playBeat(b,t){
+  if(S.src==='track'){ // the uploaded song is the music: only lay light cues over it
+    if(b<COUNT_IN){ tone(b===0?1568:1175,t,.07,'square',.05); return; } // count-in already clicks
+    if(S.restBeats.has(b)||S.travelBeats.has(b)){ tone(mtof(79),t,.14,'triangle',.08); tone(mtof(72),t+spb*.5,.14,'triangle',.06); }
+    else if(S.goBeats.has(b)){ tone(mtof(88),t,.35,'sine',.11); tone(mtof(95),t+.04,.35,'sine',.07); }
+    else if(S.ticks) tone(mtof(91),t,.07,'sine',.05);
+    if(S.metro) metroClick(t,(b-COUNT_IN)%4===0);
+    return;
+  }
+  if(b<COUNT_IN){ tone(b===0?1568:1175,t,.09,'square',.09); return; }
+  const m=b-COUNT_IN, inBar=m%4, [root,triad]=PROG[Math.floor(m/4)%4];
+  if(inBar%2===0) kick(t); else noise(t,.14,.28,1800);
+  noise(t+spb/2,.04,.10,7000);
+  tone(mtof(root-12+(inBar===2?7:0)),t,spb*.9,'triangle',.22,.01);
+  if(inBar===0) triad.forEach(n=>tone(mtof(n),t,spb*3.6,'sine',.055,.05));
+  if(S.restBeats.has(b)||S.travelBeats.has(b)){ // rest or pen lift: soft falling "lift" cue instead of the stroke pluck
+    tone(mtof(79),t,.14,'triangle',.10); tone(mtof(72),t+spb*.5,.14,'triangle',.08);
+  } else if(S.goBeats.has(b)){ // first stroke of a new word: bright "go" chime
+    tone(mtof(88),t,.35,'sine',.13); tone(mtof(95),t+.04,.35,'sine',.09);
+  } else tone(mtof(84+(m%2?0:7)),t,.12,'sine',.05); // pluck marking the stroke onset
+}
+function schedule(){
+  if(!actx||!S.flow) return;
+  while(nextT<actx.currentTime+.12 && nextBeat<endBeat){
+    const j=S.startAt.get(nextBeat);
+    if(follows() && j!=null && nextBeat>S.anchorBeat+1e-6 && !ready(j)) break; // Practice: hold before a stroke the pen is not ready for
+    playBeat(nextBeat,nextT); nextBeat++; nextT+=spb;
+  }
+}
+
+// ---------- Clock ----------
+// S.anchorBeat is where the music stands; while flowing it advances from S.anchorT.
+// Test and demo never stop the flow. Practice stops it whenever the pen leaves the path.
+const follows=()=>S.mode==='practice'&&S.gate==='hold'; // only 'waits' stops the clock
+const ducks=()=>S.mode==='practice'&&S.gate==='duck';
+const beatNow=()=>S.flow?S.anchorBeat+Math.max(0,clock()-S.anchorT)/spb:S.anchorBeat;
+const leash=()=>Math.max(.35,S.tol*2); // how close to the path counts as "on it"
+function near(j){
+  const s=S.strokes[j]; if(!s||!S.pen||s.page!==S.page) return false;
+  return nearestOn(s,S.pen.x,S.pen.y).d<=leash();
+}
+const onPath=k=>near(k)||near(k-1)||near(k+1);
+function ready(j){
+  if(!follows()) return true;
+  const s=S.strokes[j];
+  if(!S.penDown) return false;
+  return near(j)||(s.j&&j>0&&near(j-1)); // a joined stroke is ready while the pen is finishing the one before it
+}
+function newFlowOut(){
+  if(!actx) return;
+  flowOut=actx.createGain(); flowOut.connect(master);
+  flowMetro=actx.createGain(); flowMetro.gain.value=S.metroVol; flowMetro.connect(flowOut);
+}
+function cutFlow(fade){
+  if(!actx||!flowOut) return; const g=flowOut, t=actx.currentTime; flowOut=null; flowMetro=null;
+  try{ g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(1,t); g.gain.linearRampToValueAtTime(0,t+fade); }catch(e){}
+  setTimeout(()=>{ try{ g.disconnect(); }catch(e){} },6000);
+}
+function pauseAt(beat){
+  if(!S.flow) return;
+  S.anchorBeat=beat; S.flow=false; S.offSince=null;
+  if(S.strokes.length&&beat>S.strokes[0].b0) S.pauses++;
+  cutFlow(.04); stopTrack(.05);
+}
+function resume(beat){
+  S.anchorBeat=beat; S.anchorT=clock()+.03; S.flow=true;
+  if(!actx) return;
+  newFlowOut();
+  nextBeat=Math.ceil(beat-1e-6); nextT=S.anchorT+(nextBeat-beat)*spb;
+  if(S.src==='track'&&S.track) playTrack(S.anchorT,S.track.offset+beat*spb,.03); // the song carries on from where it stopped
+  schedule();
+}
+function tryResume(){
+  const b=S.anchorBeat, k=strokeAt(b);
+  if(k<0){ resume(b); return; }
+  if(ready(k)){ resume(b); return; }
+  if(!S.penDown) return;
+  // pen went straight to the next piece (a dot, a cross, the next word): the music jumps there
+  const n=k+1; if(n<S.strokes.length&&near(n)) resume(S.strokes[n].b0);
+}
+function setDuck(on,ramp=.12){
+  S.ducked=on;
+  if(!actx) return;
+  const t=actx.currentTime, f=on?DUCK_VOL:1;
+  try{
+    [[master,LV()[0]],[trackGain,LV()[1]]].forEach(([g,full])=>{
+      if(!g) return;
+      g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t); g.gain.linearRampToValueAtTime(full*f,t+ramp);
+    });
+  }catch(e){}
+}
+function duckGate(){
+  // the music never stops here, it just thins out while the pen is away from the path
+  const b=S.beat, k=b>=COUNT_IN?strokeAt(b):-1;
+  if(k<0){ if(S.ducked) setDuck(false); return; }
+  const away=!S.penDown||!onPath(k);
+  if(away!==S.ducked) setDuck(away);
+}
+function gate(now){
+  if(ducks()){ duckGate(); return; }
+  if(!follows()) return;
+  const prev=S.beat, b=beatNow();
+  // entering a stroke the pen is not ready for (after the count-in, a rest, or a lift): hold on its first beat
+  const j=nextAfter(prev);
+  if(j>=0&&S.strokes[j].b0<=b&&!ready(j)){ pauseAt(S.strokes[j].b0); return; }
+  const k=b>=COUNT_IN?strokeAt(b):-1;
+  if(k<0){ S.offSince=null; return; }
+  const prog=(b-S.strokes[k].b0)/S.bps, off=S.penDown&&!onPath(k);
+  if(off){ if(S.offSince==null) S.offSince=now; } else S.offSince=null;
+  const lifted=!S.penDown&&prog<LIFT_GRACE&&(S.reach[k]||0)<.85; // lifting after finishing the stroke early is fine
+  if(lifted||(off&&now-S.offSince>.25)) pauseAt(b);
+}
+
+// ---------- Transport ----------
+function clearAttempt(keepSel){
+  S.points=[]; S.strokes.forEach(s=>s.res=null); S.sample=false; S.finished=false; S.active=-1; S.beat=-1;
+  if(!keepSel) S.selected=-1;
+}
+function start(mode){
+  if(mode==='test'&&S.testDone) return;
+  if(S.src==='track' && !S.track){ showView('setup'); flashTrackNote('Upload a track first, or switch back to the built-in beat.'); return; }
+  stop(); stopCheck();
+  clearAttempt(); S.lastRun=null;
+  ensureAudio();
+  if(S.src==='track' && !actx){ showView('setup'); flashTrackNote('This browser cannot play audio files here.'); return; }
+  if(S.src==='track') S.bpm=S.track.bpm;
+  S.checking=false; S.attemptUntimed=false; setDuck(false,0);
+  S.gate=mode==='practice'?(S.fade?GATE_FADE[Math.min(S.practiceRuns,GATE_FADE.length-1)]:S.gateSet):'hold';
+  spb=60/S.bpm; S.mode=mode; S.playing=true; S.selected=-1; S.page=0;
+  timing(); S.next=-1; S.lastWhole=-1; S.reach={}; S.pauses=0; S.offSince=null; S.penDown=false;
+  if(S.src==='track'){
+    // beat 0 of the grid = the song's first beat; play up to 1 s of the song before it
+    const lead=Math.min(1,S.track.offset), T=actx.currentTime+.15;
+    playTrack(T,S.track.offset-lead,0);
+    S.anchorT=T; S.anchorBeat=-lead/spb; // negative beats = the bit of song before beat 1
+  } else { S.anchorT=clock()+.2; S.anchorBeat=0; }
+  S.flow=true; S.beat=beatNow();
+  nextBeat=0; nextT=S.anchorT-S.anchorBeat*spb; endBeat=S.total+1;
+  demoSeg=++S.seg;
+  if(actx){ newFlowOut(); schedule(); schedId=setInterval(schedule,25); }
+  setControlsLocked(true); buildLane(); syncUI();
+  requestAnimationFrame(tick);
+}
+// The song loops on whole bars from beat 1, so a long text never runs out of music and the beat grid stays on the beat.
+function loopRegion(){
+  const T=S.track, songSp=60/(T.baseBpm||T.bpm), avail=T.duration-T.offset-.05;
+  let len=Math.floor(avail/(4*songSp))*4*songSp; if(len<songSp*4) len=Math.max(songSp,Math.floor(avail/songSp)*songSp);
+  return {start:T.offset, end:T.offset+len, len};
+}
+function wrapPos(pos){ if(!S.track) return pos; const L=loopRegion(); return pos<L.end?pos:L.start+((pos-L.start)%L.len); }
+const trackPos=beat=>wrapPos(S.track.offset+beat*spb);
+function playTrack(T,pos,fade){
+  // each play gets its own gain so a pause can fade it out without touching the next one
+  const src=actx.createBufferSource(), g=actx.createGain(); src.buffer=S.track.buf; src.connect(g).connect(trackGain);
+  const L=loopRegion(); src.loop=true; src.loopStart=L.start; src.loopEnd=L.end;
+  g.gain.setValueAtTime(fade?0:1,T); if(fade) g.gain.linearRampToValueAtTime(1,T+fade);
+  src.start(T,Math.max(0,wrapPos(pos))); trackNode={src,g};
+}
+function stopTrack(fade){
+  if(!trackNode) return; const {src,g}=trackNode; trackNode=null;
+  try{
+    if(fade){ const t=actx.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t); g.gain.linearRampToValueAtTime(0,t+fade); src.stop(t+fade+.02); }
+    else src.stop();
+  }catch(e){}
+}
+function stop(){
+  stopTrack(0); cutFlow(.02); S.flow=false; metroLight(null);
+  if(schedId){clearInterval(schedId);schedId=null;}
+  if(master&&actx){ try{ master.gain.cancelScheduledValues(actx.currentTime); master.gain.setValueAtTime(0,actx.currentTime); master.gain.setValueAtTime(LV()[0],actx.currentTime+.25);}catch(e){} }
+  S.playing=false; S.mode=null; setControlsLocked(false);
+}
+function finish(){
+  const mode=S.mode;
+  S.strokes.forEach((s,k)=>{ if(!s.res) evaluate(k); });
+  S.playing=false; S.flow=false; S.mode=null; S.finished=true; S.active=-1; S.penDown=false;
+  stopTrack(1.2); flowOut=null; flowMetro=null; metroLight(null); drawWave();
+  if(schedId){clearInterval(schedId);schedId=null;}
+  S.lastRun={mode,bpm:S.bpm,pauses:S.pauses,gate:mode==='practice'?S.gate:null};
+  if(mode==='practice') S.practiceRuns++;
+  if(mode==='demo') S.demoWatched=true;
+  setDuck(false,0);
+  if(mode==='demo') S.demoWatched=true;
+  setControlsLocked(false);
+  const firstBad=S.strokes.findIndex(s=>s.res.status!=='valid');
+  S.selected=firstBad>=0?firstBad:S.strokes.length-1;
+  setPage(S.strokes[S.selected]?S.strokes[S.selected].page:0);
+  syncUI(); render();
+  emitRun(mode);
+  if(mode==='test'){ saveTest(); showView('results'); } // the one test attempt goes straight to results; practice stays on the lesson
+}
+function startCheck(asTest){
+  // no music, no beat, no pacing dot: the child writes everything, then asks to be scored
+  stop(); if(typeof stopCheck==='function') stopCheck();
+  clearAttempt(); S.lastRun=null;
+  S.checking=true; S.attemptUntimed=true; S.mode='check'; S.testMode=!!asTest; S.beat=-1; S.active=-1; S.pauses=0;
+  setControlsLocked(true); syncUI(); render();
+}
+function finishCheck(){
+  S.strokes.forEach((s,k)=>evaluate(k));
+  S.checking=false; S.finished=true; S.mode=null; S.penDown=false; S.active=-1;
+  S.lastRun={mode:'check',bpm:null,pauses:0,gate:null};
+  const wasTest=S.testMode; S.testMode=false;
+  setControlsLocked(false);
+  const firstBad=S.strokes.findIndex(s=>s.res.status!=='valid');
+  S.selected=firstBad>=0?firstBad:S.strokes.length-1;
+  setPage(S.strokes[S.selected]?S.strokes[S.selected].page:0);
+  syncUI(); render();
+  if(wasTest){ emitRun('test'); saveTest(); showView('results'); }
+}
+function tick(){
+  if(!S.playing) return;
+  const now=clock();
+  if(S.flow) gate(now); else tryResume();
+  S.beat=beatNow();
+  const k=S.beat>=COUNT_IN?strokeAt(S.beat):-1;
+  S.next=nextAfter(S.beat);
+  // turn the page: follow the active stroke; during a rest, flip once the last stroke's grace time is over
+  let pg=S.page;
+  if(k>=0) pg=S.strokes[k].page;
+  else if(S.beat<COUNT_IN) pg=0;
+  else if(S.next>=0){ const pv=S.next-1; pg=(pv>=0&&S.beat<windowOf(pv)[1]+.3*S.bps)?S.strokes[pv].page:S.strokes[S.next].page; }
+  if(pg!==S.page) setPage(pg,true);
+  // robot pen for demo
+  if(S.mode==='demo' && k>=0 && k!==S.active && S.strokes[k].lift) demoSeg=++S.seg; // pen lifts for new words, dots and crosses
+  if(S.mode==='demo' && k>=0 && S.flow){
+    const p=Math.min(1,Math.max(0,(S.beat-S.strokes[k].b0)/S.bps-.04)), q=penAt(k,p);
+    const pt={x:q[0],y:q[1],t:S.beat,seg:demoSeg,pg:S.strokes[k].page}; assign(pt); S.points.push(pt); S.penStatus=pt.d<=S.tol?'in':'out'; S.penDown=true;
+  }
+  // score strokes whose window (plus grace) has closed
+  S.strokes.forEach((s,i)=>{ if(!s.res && S.beat>windowOf(i)[1]+.3*S.bps) evaluate(i); });
+  if(S.mode==='demo' && (k<0||!S.flow)) S.penDown=false; // pen up while resting
+  const whole=Math.floor(S.beat);
+  if(k!==S.active){ S.active=k; S.lastWhole=whole; syncUI(); }
+  else if(whole!==S.lastWhole){ S.lastWhole=whole; syncLane(); updateHud(); } // count-in and rest cells light up beat by beat
+  else updateHud();
+  render();
+  if(S.src==='track' && S.track){ drawWave(trackPos(S.beat)); metroLight(S.flow&&(S.metro||S.beat<COUNT_IN)?S.beat:null); }
+  if(S.beat>=endBeat-.5) { finish(); return; }
+  requestAnimationFrame(tick);
+}
+
+// ---------- Pointer input ----------
+function toUnits(e){ const r=cv.getBoundingClientRect(); return [((e.clientX-r.left)-offX)/scale,(offY-(e.clientY-r.top))/scale]; }
+function addPoint(e){
+  const [x,y]=toUnits(e); S.pen={x,y};
+  const pt={x,y,t:S.playing?beatNow():null,seg:S.seg,pg:S.page};
+  assign(pt); S.points.push(pt);
+  if(S.playing&&pt.k>=0){ const s=S.strokes[pt.k], r=nearestOn(s,x,y); if(r.d<=leash()) S.reach[pt.k]=Math.max(S.reach[pt.k]||0,r.i/(s.pts.length-1)); }
+  S.penStatus = pt.k<0 ? null : pt.d<=S.tol ? 'in' : 'out';
+}
+cv.addEventListener('pointerdown',e=>{
+  if(S.mode==='demo'||S.view!=='write') return; // results page is read-only
+  if(!S.playing && (S.sample||S.finished)){ clearAttempt(); S.lastRun=null; syncUI(); }
+  cv.setPointerCapture(e.pointerId); S.penDown=true; S.seg++; addPoint(e);
+  if(!S.playing) render(); updateHud();
+});
+cv.addEventListener('pointermove',e=>{
+  if(!S.penDown||S.mode==='demo') return;
+  const list=e.getCoalescedEvents?e.getCoalescedEvents():[e]; (list.length?list:[e]).forEach(addPoint);
+  if(!S.playing) render(); updateHud();
+});
+const up=()=>{ if(S.mode==='demo') return; S.penDown=false; S.penStatus=null; updateHud(); };
+cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+
+// ---------- UI ----------
+const $=id=>document.getElementById(id);
+const lane=$('lane');
+function buildLane(){
+  lane.innerHTML='';
+  const bar=()=>{const b=document.createElement('div'); b.className='bar'; lane.appendChild(b); return b;};
+  let b=bar();
+  for(let i=0;i<COUNT_IN;i++){ const c=document.createElement('div'); c.className='cell count'; c.dataset.count=i; c.innerHTML=`<span class="ch">${COUNT_IN-i}</span><span class="ix">count</span>`; b.appendChild(c); }
+  let pos=0; // beats since the downbeat after the count-in; a new bar starts every 4 beats
+  const place=len=>{ if(pos>0&&pos%4===0) b=bar(); else if(pos===0) b=bar(); pos+=len; };
+  S.strokes.forEach((s,k)=>{
+    if(s.ws&&S.rest>0){
+      place(S.rest);
+      const np=k>0&&S.strokes[k-1].page!==s.page;
+      const r=document.createElement('div'); r.className='cell rest'+(S.rest===2?' w2':'')+(np?' newpage':''); r.dataset.rest=s.b0-S.rest; r.dataset.len=S.rest;
+      r.innerHTML=`<span class="ch">rest</span><span class="ix">${np?'new page':'lift pen'}</span>`; r.setAttribute('aria-label',np?'Rest, turn to the next page':'Rest between words');
+      b.appendChild(r);
+    } else if(s.travel){
+      place(s.gap);
+      const r=document.createElement('div'); r.className='cell rest lift'; r.dataset.rest=s.b0-s.gap; r.dataset.len=s.gap;
+      r.innerHTML=`<span class="ch">lift</span><span class="ix">${s.name==='dot'?'dot':/cross/.test(s.name)?'cross':'move'}</span>`; r.setAttribute('aria-label','Lift the pen');
+      b.appendChild(r);
+    }
+    place(S.bps);
+    const c=document.createElement('button'); c.type='button'; c.className='cell'+(S.bps===2?' w2':'')+(s.ws?' go':''); c.dataset.k=k;
+    c.setAttribute('aria-label',`Letter ${s.ch}, stroke ${s.si+1} of ${s.of}, ${s.name}`);
+    c.innerHTML=`<span class="ch">${s.ch}</span><span class="ix">${s.si+1}/${s.of}</span>`;
+    c.addEventListener('click',()=>selectStroke(k));
+    b.appendChild(c);
+  });
+  const multi=S.strokes.some(s=>s.ws);
+  $('beatmapNote').textContent=`4-beat count-in, then ${S.bps===1?'one stroke per beat':'one stroke every 2 beats'}`+
+    (multi?(S.rest?`, with a ${S.rest}-beat rest for each space`:', no rest between words'):'')+'. Tap a stroke to inspect it.';
+}
+function selectStroke(k){ if(S.playing||!S.strokes[k]) return; S.selected=k; setPage(S.strokes[k].page); syncUI(); render(); }
+function laneTo(c){ // scroll the beat map sideways only, never the page
+  const box=lane.parentElement, l=c.offsetLeft-lane.offsetLeft, r=l+c.offsetWidth;
+  if(l<box.scrollLeft||r>box.scrollLeft+box.clientWidth) box.scrollTo({left:Math.max(0,l-box.clientWidth/3),behavior:reduceMotion?'auto':'smooth'});
+}
+function syncLane(){
+  lane.querySelectorAll('.cell').forEach(c=>{
+    if(c.dataset.count!=null){ const i=+c.dataset.count; c.classList.toggle('now',S.playing&&S.beat>=i&&S.beat<i+1); return; }
+    if(c.dataset.rest!=null){ const r0=+c.dataset.rest, on=S.playing&&S.beat>=r0&&S.beat<r0+(+c.dataset.len||S.rest); c.classList.toggle('now',on);
+      if(on) laneTo(c); return; }
+    const k=+c.dataset.k, s=S.strokes[k];
+    c.classList.remove('valid','off','missed','now','sel');
+    if(s.res) c.classList.add(s.res.status);
+    if(S.playing&&k===S.active) { c.classList.add('now'); laneTo(c); }
+    if(!S.playing&&k===S.selected) c.classList.add('sel');
+  });
+}
+function updateHud(){
+  const L=$('hudLeft'), pen=$('hudPen'), pt=$('hudPenTxt');
+  const cd=$('checkDone'); if(cd){ cd.hidden=!S.checking; cd.disabled=!S.checking||!S.points.length; cd.textContent=S.testMode?'Submit test':'Score my writing'; }
+  if(S.playing){
+    const tag=`${MODE_NAME[S.mode]} · `;
+    if(!S.flow&&S.beat>=COUNT_IN&&S.active>=0){ const s=S.strokes[S.active];
+      L.innerHTML=S.active===0&&S.beat===s.b0?`Music waiting · put your pen on the dot to start <b>${esc(s.word)}</b>`:`<b>Music paused</b> · put your pen back on the path`; }
+    else if(S.beat<COUNT_IN) L.innerHTML=`${tag}Count-in <b>${Math.max(1,COUNT_IN-Math.floor(Math.max(0,S.beat)))}</b> · ${fmtBpm(S.bpm)} BPM`;
+    else if(S.active>=0){ const s=S.strokes[S.active]; L.innerHTML=`${tag}Beat <b>${Math.floor(S.beat)-COUNT_IN+1}</b> · <b>${s.ch}</b> stroke ${s.si+1}/${s.of}: ${s.name}`; }
+    else if(S.next>=0&&S.strokes[S.next].travel){ const nx=S.strokes[S.next];
+      L.innerHTML=`<b>Lift your pen</b> · ${nx.name==='dot'?`dot the <b>${esc(nx.ch)}</b>`:/cross/.test(nx.name)?`cross the <b>${esc(nx.ch)}</b>`:`on to <b>${esc(nx.ch)}</b>`} on the next beat`; }
+    else if(S.next>=0){ const n=Math.max(1,Math.ceil(S.strokes[S.next].b0-S.beat)), np=S.next>0&&S.strokes[S.next-1].page!==S.strokes[S.next].page;
+      L.innerHTML=`Rest · ${np?'new page':'lift your pen'} · <b>${esc(S.strokes[S.next].word)}</b> starts in <b>${n}</b> beat${n>1?'s':''}`; }
+    else L.innerHTML='Finishing…';
+  } else if(S.checking) L.innerHTML=S.points.length
+      ?`<b>${MODE_NAME.check}</b> · no music · tap <b>${S.testMode?'Submit test':'Score my writing'}</b> when you have written everything`
+      :`<b>${MODE_NAME.check}</b> · no music, no beat · write it at your own pace`;
+  else if(S.sample) L.innerHTML='Sample attempt · watch the <b>demo</b>, then try <b>Practice</b> or <b>Test</b>';
+  else if(S.finished){
+    const r=S.lastRun;
+    if(r&&r.mode==='check') L.innerHTML=`${MODE_NAME.check} · <b>${S.strokes.filter(s=>s.res&&s.res.status==='valid').length} of ${S.strokes.length}</b> strokes on the line · no music`+(PILOT?'':' · tap the paper to try again');
+    else if(r&&r.mode==='demo') L.innerHTML='Demo finished · watch again, or try <b>Practice</b> or <b>Test</b>';
+    else if(r&&r.mode==='practice') L.innerHTML=`Practice scored · <b>${S.strokes.filter(s=>s.res&&s.res.status==='valid').length} of ${S.strokes.length}</b> strokes valid`+(r.pauses?` · music paused ${r.pauses}×`:'')+' · tap the paper to try again';
+    else L.innerHTML=`${r?MODE_NAME[r.mode]+' scored':'Attempt scored'} · <b>${esc(shortText(S.word))}</b> at ${fmtBpm(S.bpm)} BPM`+(r&&r.mode==='practice'&&r.pauses?` · music paused ${r.pauses}×`:'');
+  }
+  else if(S.points.length) L.innerHTML='Free trace (not timed)';
+  else L.innerHTML=`<b>${esc(shortText(S.word))}</b> · ${S.strokes.length} strokes · ${fmtBpm(S.bpm)} BPM`;
+  pen.classList.remove('in','out');
+  if(S.penDown&&S.penStatus){ pen.classList.add(S.penStatus); pt.textContent=S.penStatus==='in'?'Inside margin':'Outside margin'; }
+  else pt.textContent=S.penDown?'Waiting for a stroke':(S.playing&&!S.flow&&S.beat>=COUNT_IN?'Pen up · music paused':'Pen up');
+}
+const pct=v=>Math.round(v*100)+'%';
+function renderResults(){
+  const timed=!S.attemptUntimed;
+  const N=S.strokes.length, scored=S.strokes.filter(s=>s.res), cnt=st=>scored.filter(s=>s.res.status===st).length;
+  const valid=cnt('valid'), off=cnt('off'), rev=cnt('reversed'), missed=cnt('missed'), pending=N-scored.length;
+  $('scoreBig').textContent=Math.round(attemptScore()*100)+'%';
+  $('scoreOf').textContent=`${valid} of ${N} strokes on the line`+(S.sample?' (sample)':'');
+  const m=$('meter'); m.innerHTML='';
+  [[valid,C.ok],[off,C.bad],[rev,C.accent],[missed,C.missed]].forEach(([n,c])=>{ if(n){const i=document.createElement('i'); i.style.width=(n/N*100)+'%'; i.style.background=c; m.appendChild(i);} });
+  $('legend').innerHTML=[[valid,'ok','on the line'],[off,'bad','off the line'],[rev,'accent','wrong direction'],[missed,'missed','missed']]
+    .filter(([n],i)=>n||i<2).map(([n,c,l])=>`<span><i style="background:var(--${c})"></i>${n} ${l}</span>`).join('')+(pending&&!S.playing?`<span>${pending} not traced</span>`:'');
+
+  const r=S.lastRun; let run;
+  if(S.sample) run='Sample attempt. Watch the demo, then practice to see your own results.';
+  else if(r&&r.mode==='check') run=`${MODE_NAME.check} · no music · scored on how closely you followed the line, in the right direction · margin ${Math.round(S.tol*100)}%`;
+  else if(r) run=`${MODE_NAME[r.mode]} · ${r.mode==='practice'?(r.gate==='duck'?'music thinned out when your pen left the path':r.gate==='off'?'music kept going, no help':'music followed your pen'):r.mode==='test'?'you followed the music':'model pen'} · ${fmtBpm(r.bpm)} BPM · ${S.bps} beat${S.bps>1?'s':''} per stroke · margin ${Math.round(S.tol*100)}%`+(r.mode==='practice'&&r.gate==='hold'?` · music paused ${r.pauses}×`:'');
+  else run=S.points.length?'Free trace (not timed).':'No attempt yet.';
+  $('runInfo').textContent=run;
+
+  const tr=scored.filter(s=>s.res.status!=='missed');
+  const avg=f=>tr.length?tr.reduce((a,s)=>a+(s.res[f]||0),0)/tr.length:null;
+  const am=(v,rule,name,sub)=>`<div class="metric"><span class="n ${v==null?'':v>=rule?'pass':'fail'}">${v==null?'–':pct(v)}</span><span class="k">${name}</span><span class="t">${sub}</span></div>`;
+  $('avgs').innerHTML=am(avg('path'),RULES.pass,'path followed','closeness at every point of the model')+am(avg('ink'),RULES.pass,'ink on the line','closeness at every point you drew')+(timed?am(avg('onTime'),RULES.onTime,'on the beat','for information, not scored'):'');
+
+  const offS=scored.filter(s=>s.res.status==='off');
+  const iss=[['Wandered off the line',offS.filter(s=>s.res.ink<RULES.pass).length],
+             ['Skipped part of a stroke',offS.filter(s=>s.res.path<RULES.pass).length],
+             ['Went the wrong direction',rev],
+             ['Missed completely',missed]];
+  const mx=Math.max(1,...iss.map(i=>i[1]));
+  $('issues').innerHTML=iss.map(([l,n])=>`<div class="issue"><span>${l}</span><span class="trk"><i style="width:${n/mx*100}%"></i></span><b>${n}</b></div>`).join('');
+
+  const by=new Map();
+  S.strokes.forEach((s,k)=>{ let e=by.get(s.li); if(!e){ e={li:s.li,ch:s.ch,word:s.word,n:0,sum:0,bad:0,k:-1}; by.set(s.li,e); }
+    e.n++; e.sum+=s.res?s.res.score:0; if(s.res&&s.res.status!=='valid'){ e.bad++; if(e.k<0) e.k=k; } });
+  const selLi=S.strokes[S.selected]?S.strokes[S.selected].li:-1;
+  const list=[...by.values()].filter(e=>e.bad).sort((a,b)=>a.sum/a.n-b.sum/b.n||a.li-b.li).slice(0,14);
+  $('letters').innerHTML=list.length
+    ?list.map(e=>`<button type="button" class="lt${e.li===selLi?' sel':''}" data-k="${e.k}" title="In “${esc(e.word)}”"><span class="ch">${esc(e.ch)}</span><span class="ix">${pct(e.sum/e.n)}</span></button>`).join('')
+    :`<p class="note">${scored.length?'Every letter counted. Nice work.':'Nothing scored yet.'}</p>`;
+
+  const box=$('insp'); const k=S.playing?S.active:S.selected;
+  if(k==null||k<0||k>=N){ box.innerHTML=`<p class="note">${S.playing?'Get ready. The first stroke starts on the downbeat after the count-in.':'Tap a stroke in the beat map to see how it was scored.'}</p>`; return; }
+  const s=S.strokes[k], rs=s.res, st=rs?rs.status:'pending';
+  const label={valid:'On the line',off:'Off the line',reversed:'Wrong direction',missed:'Missed',pending:S.playing?'In progress':'Not traced'}[st];
+  const [a,b]=windowOf(k), sTimed=rs?!rs.untimed:timed;
+  const metric=(v,rule,name,sub)=>`<div class="metric"><span class="n ${rs&&rs.status!=='missed'&&v!=null?(v>=rule?'pass':'fail'):''}">${rs&&v!=null?pct(v):'–'}</span><span class="k">${name}</span><span class="t">${sub}</span></div>`;
+  let why='';
+  if(rs&&rs.status==='reversed') why='<p class="note">Drawn backwards. Start at the big dot and follow the arrow.</p>';
+  else if(rs&&rs.status==='off'){
+    const fails=[]; if(rs.ink<RULES.pass) fails.push('the pen wandered away from the line'); if(rs.path<RULES.pass) fails.push('part of the stroke was skipped');
+    why=`<p class="note">Below ${pct(RULES.pass)}: ${fails.join(', ')||'the pen stayed a little too far from the line'}.</p>`;
+  } else if(rs&&rs.status==='missed') why=`<p class="note">${sTimed?'No ink landed in this stroke’s beat window.':'No ink landed on this stroke.'}</p>`;
+  else if(rs) why='<p class="note">Counted. The pen stayed close to the line the whole way, in the right direction.</p>';
+  box.innerHTML=`<div class="insp-title"><span class="glyph">${s.ch}</span><div><h2>Stroke ${s.si+1} of ${s.of}: ${s.name}</h2><span class="note">${sTimed?`Beats ${a-COUNT_IN+1}${S.bps>1?'–'+(b-COUNT_IN):''} · `:''}${rs?rs.n+' ink points':'no ink yet'}</span></div><span class="status ${st}">${label}</span></div>
+    <div class="metrics">${metric(rs?rs.score:0,RULES.pass,'stroke score','needs '+pct(RULES.pass))}${metric(rs?rs.path:0,RULES.pass,'path followed','every point of the model')}${metric(rs?rs.ink:0,RULES.pass,'ink on the line','every point you drew')}${sTimed?metric(rs?rs.onTime:0,RULES.onTime,'on the beat','not scored'):''}</div>${why}`;
+}
+$('letters').addEventListener('click',e=>{ const b=e.target.closest('[data-k]'); if(b) selectStroke(+b.dataset.k); });
+function updateSummary(){
+  const txt=`<b>${esc(shortText(S.word))}</b> · ${S.strokes.length} strokes · ${S.pages} page${S.pages>1?'s':''} · ${fmtBpm(S.bpm)} BPM`;
+  $('setupSummary').innerHTML=txt; $('writeWord').innerHTML=txt;
+}
+function updateModes(){
+  const map={demo:$('demoBtn'),practice:$('pracBtn'),test:$('testBtn'),check:$('checkBtn')};
+  Object.entries(map).forEach(([m,b])=>{ b.disabled=S.playing||S.checking; b.classList.toggle('running',(S.playing&&S.mode===m)||(m==='check'&&S.checking&&!S.testMode)||(m==='test'&&S.checking&&S.testMode)); b.classList.remove('primary'); });
+  const gated=PILOT&&HOST.role!=='preview'&&!HOST.checkOnly;
+  const testInfo=S.testSnap?{valid:S.testSnap.res.filter(r=>r&&r.status==='valid').length,total:S.testSnap.res.length,score:S.testSnap.score}:(HOST&&HOST.progress&&HOST.progress.test)||null;
+  // step 1 -> 2 -> 3: practice opens after one demo, the test after one practice run
+  const pracLocked=gated&&!S.demoWatched, testLocked=gated&&S.practiceRuns<1;
+  if(pracLocked) map.practice.disabled=true;
+  if(testLocked&&!S.testDone) map.test.disabled=true;
+  if(!S.demoWatched) map.demo.classList.add('primary');
+  else if(!S.practiceRuns&&!S.playing) map.practice.classList.add('primary');
+  else if(!S.testDone&&!S.playing&&!S.checking) map.test.classList.add('primary');
+  $('demoBadge').hidden=S.demoWatched;
+  $('pracMd').textContent=pracLocked?'Unlocks after you watch the demo.':'The music follows your pen. It waits for you when you lift.';
+  $('writeHint').textContent=S.testDone
+    ?'Test submitted. You can keep watching the demo and practicing as much as you like.'
+    :PILOT&&HOST.checkOnly?'This is a handwriting check. Your teacher uses it to see how your cursive grows.'
+    :PILOT?(S.practiceRuns?'Practice as much as you like. When you are ready, take the test: no music, one try.'
+      :S.demoWatched?'Now practice with the music. It waits for you when you lift your pen.':'Start by watching the demo. Watch it as many times as you like.')
+    :S.demoWatched
+    ?'Watch the demo again any time and practice as often as you like. When you are ready, take the test. You only get one try.'
+    :'Watch the demo first, as many times as you like. Then practice with training wheels. The test is one try only.';
+  const tb=map.test;
+  tb.classList.toggle('done',S.testDone); tb.classList.toggle('confirm',!!testConfirm&&!S.testDone);
+  const testDesc=PILOT?'No music. Write it at your own pace. One try, and it is graded.':'You follow the music. It keeps going no matter what. One try only.';
+  if(S.testDone){ tb.disabled=true;
+    $('testTitle').textContent='Test submitted';
+    $('testMd').textContent=testInfo?(testInfo.score!=null?`Score ${Math.round(testInfo.score*100)}%`:`${testInfo.valid} of ${testInfo.total} strokes`)+(S.testSnap?'. See your test results.':'.'):'Done.'; }
+  else if(testConfirm){ $('testTitle').textContent='Start the test?'; $('testMd').textContent='You only get one try. Tap again to start.'; }
+  else if(testLocked){ $('testTitle').textContent='Test'; $('testMd').textContent='Unlocks after you practice once.'; }
+  else if(PILOT&&HOST.checkOnly){ $('testTitle').textContent='Start the handwriting check'; $('testMd').textContent='No music and no demo. Write it as neatly as you can, at your own pace. One try.'; }
+  else { $('testTitle').textContent='Test'; $('testMd').textContent=testDesc; }
+  $('resultsStep').disabled=S.playing||!S.testSnap; $('seeResults').disabled=S.playing||!S.testSnap; $('seeResults').hidden=PILOT&&!S.testSnap;
+  $('testAdmin').hidden=!S.testDone||PILOT;
+  if(S.testDone&&testInfo) $('testAdminNote').textContent=`Taken once: ${testInfo.valid} of ${testInfo.total} strokes valid. Reset it to let the test be taken again. Changing the words also resets it.`;
+}
+function syncUI(){ syncLane(); updateHud(); renderResults(); updateTrackInfo(); updateSummary(); updateModes(); }
+function setControlsLocked(on){
+  ['customWord','customClear','trackFile','trackBpm','trackOffset','checkSync','bpmHalf','bpmDouble','bpmDetect'].forEach(id=>$(id).disabled=on);
+  $('bpm').disabled=on||S.src==='track';
+  document.querySelectorAll('.chip,.seg button,[data-nudge],[data-go]').forEach(b=>b.disabled=on);
+  $('clearBtn').textContent=on?(S.mode==='test'?'End test':S.mode==='check'?'Start over':'Stop'):'Clear';
+  $('clearBtn').hidden=on&&S.testMode; // the test can't be started over
+  $('lockBtn').disabled=on;
+  updateModes(); updatePager();
+}
+function setWord(w){
+  S.testDone=false; S.testSnap=null; // new words: the old test no longer applies
+  S.word=w; S.page=0; S.wrap=wrapFor(stageWidth()); S.strokes=buildWord(w);
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.word===w)));
+  layout(); buildLane(); freshModel(); syncUI(); render();
+}
+const shortText=t=>t.length>34?t.slice(0,32).trimEnd()+'…':t;
+
+// ---------- Pages (paper) ----------
+function updatePager(){
+  const pg=$('pager'); if(!pg) return;
+  pg.hidden=S.pages<=1;
+  $('pageTxt').innerHTML=`Page <b>${S.page+1}</b> of ${S.pages}`;
+  $('pgDots').innerHTML=S.pages<=14?Array.from({length:S.pages},(_,i)=>`<i class="${i===S.page?'on':i<S.page?'done':''}"></i>`).join(''):'';
+  $('pgPrev').disabled=S.playing||S.page<=0;
+  $('pgNext').disabled=S.playing||S.page>=S.pages-1;
+  $('pageInfo').innerHTML=S.pages>1?`continues on <b>${S.pages} pages</b>`:'fits on 1 page';
+}
+function setPage(p,anim){
+  p=Math.max(0,Math.min(S.pages-1,p));
+  const changed=p!==S.page; S.page=p; updatePager();
+  if(changed&&anim&&!reduceMotion){ cv.classList.remove('flip'); void cv.offsetWidth; cv.classList.add('flip'); }
+  if(changed&&!S.playing) render();
+}
+$('pgPrev').addEventListener('click',()=>setPage(S.page-1,true));
+$('pgNext').addEventListener('click',()=>setPage(S.page+1,true));
+cv.addEventListener('animationend',()=>cv.classList.remove('flip'));
+
+// ---------- Views: setup, write, results ----------
+// The canvas and beat map are shared: they move into whichever of Write or Results is showing.
+const VIEWS=['setup','write','results'];
+function showView(v){
+  if(S.playing) return;
+  if(v==='setup'&&S.locked) return;
+  if(v==='results'&&!S.testSnap) return;
+  stopCheck();
+  if(v==='results') restoreTest();
+  else if(S.view==='results'){ clearAttempt(); S.lastRun=null; }
+  S.view=v;
+  VIEWS.forEach(n=>$('view-'+n).hidden=n!==v);
+  document.querySelectorAll('.step').forEach(b=>b.setAttribute('aria-current',b.dataset.go===v?'page':'false'));
+  const slot=v==='results'?'R':'W';
+  $('stageSlot'+slot).appendChild(stage); $('mapSlot'+slot).appendChild($('beatmap'));
+  $('waveWWrap').hidden=!(S.src==='track'&&S.track);
+  if(v==='results'&&S.strokes[S.selected]) setPage(S.strokes[S.selected].page);
+  layout(); render(); drawWave(); syncUI();
+  window.scrollTo({top:0,behavior:reduceMotion?'auto':'smooth'});
+}
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.go)));
+
+// ---------- Custom text composer ----------
+const cw=$('customWord');
+function updateComposer(){
+  cw.style.height='auto'; cw.style.height=cw.scrollHeight+'px';
+  const n=cw.value.length; $('charCount').textContent=`${n} / ${cw.maxLength}`;
+  $('customClear').hidden=!n; $('composer').classList.toggle('has-text',!!n);
+}
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ cw.value=''; updateComposer(); setWord(c.dataset.word); }));
+let typeTimer=null;
+const cleanText=raw=>raw.replace(/\s+/g,' ').replace(/[^A-Za-z.,!?' ]/g,'').replace(/ {2,}/g,' ').replace(/^ /,'');
+cw.addEventListener('input',()=>{
+  const raw=cw.value, clean=cleanText(raw);
+  if(clean!==raw){ const pos=cw.selectionStart-(raw.length-clean.length); cw.value=clean; try{ cw.setSelectionRange(pos,pos); }catch(e){} }
+  updateComposer();
+  clearTimeout(typeTimer);
+  const text=clean.trim();
+  if(/[A-Za-z.,!?']/.test(text)) typeTimer=setTimeout(()=>setWord(text),260);
+});
+cw.addEventListener('keydown',e=>{
+  if(e.key!=='Enter') return;
+  e.preventDefault(); clearTimeout(typeTimer);
+  const text=cw.value.trim(); if(/[A-Za-z.,!?']/.test(text)&&text!==S.word) setWord(text);
+  cw.blur();
+});
+$('customClear').addEventListener('click',()=>{ clearTimeout(typeTimer); cw.value=''; updateComposer(); setWord('hello'); cw.focus(); });
+new ResizeObserver(updateComposer).observe(cw);
+$('bpm').addEventListener('input',e=>{ if(S.src!=='synth') return; S.bpm=+e.target.value; $('bpmVal').textContent=S.bpm+' BPM'; updateHud(); updateSummary(); });
+
+// ---------- Uploaded track ----------
+const fmtTime=s=>{ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
+const fmtBpm=v=>Math.round(v*10)/10;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let checking=false, waveCache={}, noteTimer=null;
+function flashTrackNote(msg){
+  S.src='track'; applySource();
+  const n=$('trackName'); n.textContent=msg; n.classList.add('warn');
+  clearTimeout(noteTimer); noteTimer=setTimeout(()=>{ n.classList.remove('warn'); n.innerHTML=S.track?`<b>${esc(S.track.name)}</b> · ${fmtTime(S.track.duration)}`:'No track yet. MP3, WAV or M4A, or drop a file on this panel.'; },3500);
+}
+function applySource(){
+  document.querySelectorAll('[data-src]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.src===S.src)));
+  $('trackUI').hidden=S.src!=='track';
+  if(S.src==='track'){ if(S.track) S.bpm=S.track.bpm; }
+  else S.bpm=+$('bpm').value;
+  $('bpm').disabled=S.src==='track'||S.playing;
+  $('metroBpm').textContent=S.track?`${fmtBpm(S.track.bpm)} BPM`:'no track';
+  $('bpmVal').textContent=S.src==='track'?(S.track?`${fmtBpm(S.bpm)} BPM · from your track`:'set by your track'):S.bpm+' BPM';
+  $('waveWWrap').hidden=!(S.src==='track'&&S.track);
+  $('waveWName').innerHTML=S.track?`<b>${esc(S.track.name)}</b> · ${fmtBpm(S.track.bpm)} BPM · beat 1 at ${S.track.offset.toFixed(2)} s`:'';
+  updateHud(); updateTrackInfo(); updateSummary(); drawWave();
+}
+function updateTrackInfo(){
+  const el=$('trackInfo'); if(!el) return;
+  if(S.src!=='track'||!S.track){ el.textContent=''; el.classList.remove('warn'); return; }
+  const sp=60/S.track.bpm, needed=(S.total+.5)*sp, L=loopRegion();
+  const what=S.word.includes(' ')?'This text':'This word';
+  el.classList.remove('warn');
+  el.textContent=needed>L.len?`${what} needs ${fmtTime(needed)} of music. The track loops every ${fmtTime(L.len)}, so it keeps playing to the end.`
+    :`${what} uses ${fmtTime(needed)} of the track (${S.total} beats including the count-in).`;
+}
+function detectFirstBeat(buf){
+  // first 10 ms window whose loudness reaches 30% of the loudest window in the opening 30 s
+  const d=buf.getChannelData(0), sr=buf.sampleRate, win=Math.max(1,Math.round(sr*.01)), lim=Math.min(d.length,sr*30), rms=[]; let max=0;
+  for(let i=0;i+win<=lim;i+=win){ let s=0; for(let j=i;j<i+win;j++) s+=d[j]*d[j]; const r=Math.sqrt(s/win); rms.push(r); if(r>max) max=r; }
+  for(let i=0;i<rms.length;i++) if(rms[i]>=max*.3) return i*.01;
+  return 0;
+}
+// ---------- Tempo detection ----------
+// 1) spectral-flux onset envelope  2) autocorrelation with a tempo prior picks the beat period
+// 3) a comb of pulses is slid over the envelope to refine BPM to 0.02 and find the beat phase
+function fftInPlace(re,im,cosT,sinT,rev){
+  const n=re.length;
+  for(let i=0;i<n;i++){ const j=rev[i]; if(j>i){ let t=re[i]; re[i]=re[j]; re[j]=t; t=im[i]; im[i]=im[j]; im[j]=t; } }
+  for(let size=2;size<=n;size<<=1){
+    const half=size>>1, step=n/size;
+    for(let i=0;i<n;i+=size) for(let j=0;j<half;j++){
+      const k=j*step, a=i+j, b=a+half, wr=cosT[k], wi=sinT[k];
+      const tr=wr*re[b]-wi*im[b], ti=wr*im[b]+wi*re[b];
+      re[b]=re[a]-tr; im[b]=im[a]-ti; re[a]+=tr; im[a]+=ti;
+    }
+  }
+}
+function onsetEnvelope(buf,maxSec){
+  const sr0=buf.sampleRate, ds=Math.max(1,Math.round(sr0/22050)), sr=sr0/ds;
+  const n=Math.floor(Math.min(buf.duration,maxSec)*sr), nc=buf.numberOfChannels, chans=[];
+  for(let c=0;c<nc;c++) chans.push(buf.getChannelData(c));
+  const x=new Float32Array(n);
+  for(let i=0;i<n;i++){ let s=0; const o=i*ds; for(let c=0;c<nc;c++) for(let d=0;d<ds;d++) s+=chans[c][o+d]||0; x[i]=s/(nc*ds); }
+  const win=512, hop=128, fps=sr/hop, frames=Math.max(0,Math.floor((n-win)/hop));
+  const cosT=new Float32Array(win/2), sinT=new Float32Array(win/2), rev=new Uint16Array(win), hann=new Float32Array(win);
+  for(let k=0;k<win/2;k++){ cosT[k]=Math.cos(2*Math.PI*k/win); sinT[k]=-Math.sin(2*Math.PI*k/win); }
+  const bits=Math.log2(win); for(let i=0;i<win;i++){ let r=0; for(let b=0;b<bits;b++) r|=((i>>b)&1)<<(bits-1-b); rev[i]=r; }
+  for(let i=0;i<win;i++) hann[i]=.5-.5*Math.cos(2*Math.PI*i/(win-1));
+  // 20 log-spaced bands (40 Hz to 10 kHz) so kick and bass weigh as much as cymbals
+  const NB=20, bins=win/2, edges=[];
+  for(let b=0;b<=NB;b++) edges.push(Math.max(1,Math.min(bins,Math.round(40*Math.pow(10000/40,b/NB)*win/sr))));
+  const re=new Float32Array(win), im=new Float32Array(win), prev=new Float32Array(NB), env=new Float32Array(frames);
+  for(let f=0;f<frames;f++){
+    const o=f*hop; for(let i=0;i<win;i++){ re[i]=x[o+i]*hann[i]; im[i]=0; }
+    fftInPlace(re,im,cosT,sinT,rev);
+    let flux=0;
+    for(let b=0;b<NB;b++){
+      const a=edges[b], z=Math.max(a+1,edges[b+1]); let e=0; for(let k=a;k<z;k++) e+=re[k]*re[k]+im[k]*im[k];
+      const m=Math.log1p(1000*Math.sqrt(e/(z-a))); const d=m-prev[b]; if(d>0) flux+=d; prev[b]=m;
+    }
+    env[f]=flux;
+  }
+  // remove the slow loudness trend (0.5 s moving average) and keep the rises
+  const w=Math.round(fps*.25), out=new Float32Array(frames); let acc=0;
+  const pre=new Float64Array(frames+1); for(let i=0;i<frames;i++) pre[i+1]=pre[i]+env[i];
+  for(let i=0;i<frames;i++){ const a=Math.max(0,i-w), b=Math.min(frames,i+w+1); const m=(pre[b]-pre[a])/(b-a); const v=env[i]-m; out[i]=v>0?v:0; acc+=out[i]; }
+  const mean=acc/Math.max(1,frames); if(mean>0) for(let i=0;i<frames;i++) out[i]/=mean;
+  return {env:out,fps,frameT:(win/2)/sr};
+}
+function combScore(env,period){
+  // best phase for a pulse train with this period; returns {score, phase}
+  let best=-1, bestPh=0; const N=env.length, P=Math.ceil(period);
+  for(let ph=0;ph<P;ph++){
+    let s=0, c=0;
+    for(let t=ph;t<N-1;t+=period){ const i=Math.floor(t), f=t-i; s+=env[i]*(1-f)+env[i+1]*f; c++; }
+    s/=Math.max(1,c); if(s>best){ best=s; bestPh=ph; }
+  }
+  // sub-frame phase refinement
+  let bp=bestPh; for(let d=-.9;d<=.9;d+=.1){ const ph=bestPh+d; if(ph<0) continue; let s=0,c=0; for(let t=ph;t<N-1;t+=period){ const i=Math.floor(t), f=t-i; s+=env[i]*(1-f)+env[i+1]*f; c++; } s/=Math.max(1,c); if(s>best){ best=s; bp=ph; } }
+  return {score:best, phase:bp};
+}
+function analyzeTempo(buf,fixedBpm){
+  const {env,fps,frameT}=onsetEnvelope(buf,90), N=env.length;
+  if(N<fps*4) return null;
+  let bpm0=fixedBpm;
+  if(!bpm0){
+    const minL=Math.floor(fps*60/210), maxL=Math.ceil(fps*60/50), ac=new Float32Array(2*maxL+2);
+    for(let l=minL;l<=2*maxL+1&&l<N;l++){ let s=0; for(let i=0;i+l<N;i++) s+=env[i]*env[i+l]; ac[l]=s/(N-l); }
+    let bestL=minL, best=-1;
+    for(let l=minL;l<=maxL;l++){
+      const bpm=60*fps/l, prior=Math.exp(-.5*Math.pow(Math.log2(bpm/115)/.9,2));
+      const sc=(ac[l]+.5*(ac[2*l]||0))*prior;
+      if(sc>best){ best=sc; bestL=l; }
+    }
+    const a=ac[bestL-1]||0, b=ac[bestL], c=ac[bestL+1]||0, den=a-2*b+c;
+    const lf=bestL+(den!==0?.5*(a-c)/den:0);
+    bpm0=60*fps/lf;
+  }
+  const prior=b=>Math.exp(-.5*Math.pow(Math.log2(b/115)/.9,2));
+  const refine=(center,span,step)=>{ let bb={score:-1,bpm:center}; for(let b=center-span;b<=center+span+1e-9;b+=step){ const r=combScore(env,60*fps/b); if(r.score>bb.score) bb={...r,bpm:b}; } return bb; };
+  if(!fixedBpm){
+    // guard against picking a related tempo (half, double, 2/3, 3/2...): test each against the audio
+    let pick={v:-1,bpm:bpm0};
+    [1,2,.5,1.5,2/3,4/3,.75].forEach(f=>{ const c=bpm0*f; if(c<50||c>210) return;
+      const r=refine(c,Math.max(.6,c*.012),.1), v=r.score*prior(r.bpm); if(v>pick.v) pick={v,bpm:r.bpm}; });
+    bpm0=pick.bpm;
+  }
+  // refine: slide a comb over the whole envelope
+  const span=fixedBpm?.3:.4; let best=refine(bpm0,span,.02);
+  let bpm=best.bpm; if(!fixedBpm&&Math.abs(bpm-Math.round(bpm))<.12) bpm=Math.round(bpm); // produced music is usually a whole-number BPM
+  if(fixedBpm) bpm=fixedBpm;
+  const r=combScore(env,60*fps/bpm);
+  // confidence: how much stronger the beat positions are than a random phase
+  let sum=0, cnt=0; const period=60*fps/bpm;
+  for(let ph=0;ph<period;ph+=period/7){ let s=0,c=0; for(let t=ph;t<N-1;t+=period){ s+=env[Math.floor(t)]; c++; } sum+=s/Math.max(1,c); cnt++; }
+  const conf=r.score/Math.max(1e-6,sum/cnt);
+  return {bpm, phaseSec:r.phase/fps+frameT, conf};
+}
+function alignedOffset(phaseSec,bpm,firstSound){
+  const P=60/bpm; let k=Math.ceil((firstSound-.08-phaseSec)/P), t=phaseSec+k*P;
+  while(t<0) t+=P;
+  return t;
+}
+async function runDetect(ignoreName){
+  if(!S.track) return;
+  const st=$('bpmStatus'); st.textContent='Listening for the beat…'; st.classList.remove('warn');
+  $('bpmDetect').disabled=true;
+  await new Promise(r=>setTimeout(r,30));
+  const m=!ignoreName&&S.track.name.match(/(\d{2,3}(?:\.\d+)?)\s*bpm/i), named=m&&+m[1]>=20&&+m[1]<=400?+m[1]:null;
+  let res=null; try{ res=analyzeTempo(S.track.buf,named); }catch(e){}
+  $('bpmDetect').disabled=S.playing;
+  if(!res){ st.textContent='Could not find a steady beat. Enter the BPM yourself.'; st.classList.add('warn'); return; }
+  const first=detectFirstBeat(S.track.buf);
+  S.track.bpm=res.bpm; $('trackBpm').value=fmtBpm(res.bpm); waveCache={};
+  setOffset(alignedOffset(res.phaseSec,res.bpm,first),true);
+  const sure=res.conf>=1.8?'strong beat':res.conf>=1.35?'check by ear':'weak beat, check by ear';
+  st.textContent=named?`${fmtBpm(res.bpm)} BPM from the file name · beat grid aligned to the audio.`
+    :`Detected ${fmtBpm(res.bpm)} BPM (${sure}). If it feels twice as fast or slow, use ½× or 2×.`;
+  if(res.conf<1.35&&!named) st.classList.add('warn');
+  applySource();
+}
+function setOffset(v,auto){
+  if(!S.track) return;
+  S.track.offset=Math.max(0,Math.min(S.track.duration-.5,Math.round(v*1000)/1000));
+  $('trackOffset').value=S.track.offset.toFixed(2);
+  $('offVal').textContent=S.track.offset.toFixed(2)+' s'+(auto?' · auto':'');
+  if(S.track) $('waveWName').innerHTML=`<b>${esc(S.track.name)}</b> · ${fmtBpm(S.track.bpm)} BPM · beat 1 at ${S.track.offset.toFixed(2)} s`;
+  drawWave(); updateTrackInfo();
+}
+async function loadFile(file){
+  if(!file) return;
+  ensureAudio();
+  if(!actx){ flashTrackNote('This browser cannot play audio files here.'); return; }
+  S.src='track'; applySource();
+  $('trackName').textContent='Reading '+file.name+'…';
+  try{
+    const ab=await file.arrayBuffer();
+    const buf=await new Promise((res,rej)=>{ const p=actx.decodeAudioData(ab,res,rej); if(p&&p.then) p.then(res,rej); });
+    S.track={buf,name:file.name,bpm:+$('trackBpm').value||100,offset:0,duration:buf.duration};
+    waveCache={};
+    $('trackName').classList.remove('warn');
+    $('trackName').innerHTML=`<b>${esc(file.name)}</b> · ${fmtTime(buf.duration)}`;
+    setOffset(detectFirstBeat(buf),true);
+    applySource();
+    await runDetect(false); // "song_120bpm.mp3" uses 120 from the name; otherwise the tempo is detected
+  }catch(e){ S.track=null; flashTrackNote('That file could not be read as audio. Try an MP3 or WAV.'); }
+}
+// The waveform shows on the setup page (click to set beat 1) and on the writing page (with a playhead)
+function drawWave(playPos){ ['wave','waveW'].forEach(id=>drawWaveOn($(id),playPos)); }
+function drawWaveOn(cvw,playPos){
+  if(!cvw) return;
+  const w=cvw.clientWidth, h=104, d=window.devicePixelRatio||1; if(!w) return;
+  if(cvw.width!==Math.round(w*d)){ cvw.width=Math.round(w*d); cvw.height=Math.round(h*d); delete waveCache[cvw.id]; }
+  const g=cvw.getContext('2d'); g.setTransform(d,0,0,d,0,0);
+  g.fillStyle=C.sheet; g.fillRect(0,0,w,h);
+  if(!S.track){ g.fillStyle=C.muted; g.font='13px "Atkinson Hyperlegible", system-ui, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText('Your track’s waveform and beat grid will show here',w/2,h/2); return; }
+  const T=S.track, sp=60/T.bpm, v0=Math.max(0,T.offset-1.5), v1=Math.min(T.duration,Math.max(v0+4,T.offset+sp*(COUNT_IN+8)+.5));
+  const key=[w,v0.toFixed(3),v1.toFixed(3)].join();
+  let pc=waveCache[cvw.id];
+  if(!pc||pc.key!==key){
+    const ch=T.buf.getChannelData(0), sr=T.buf.sampleRate, arr=new Float32Array(Math.ceil(w)); let mx=1e-6;
+    for(let x=0;x<arr.length;x++){ const a=Math.floor((v0+(v1-v0)*x/w)*sr), b=Math.min(ch.length,Math.floor((v0+(v1-v0)*(x+1)/w)*sr)); let p=0; for(let i=a;i<b;i+=4){ const v=Math.abs(ch[i]); if(v>p) p=v; } arr[x]=p; if(p>mx) mx=p; }
+    for(let x=0;x<arr.length;x++) arr[x]/=mx;
+    pc=waveCache[cvw.id]={key,arr};
+  }
+  const X=t=>(t-v0)/(v1-v0)*w, mid=h/2+8;
+  g.fillStyle=C.muted; g.globalAlpha=.4;
+  pc.arr.forEach((p,x)=>{ const a=Math.max(.5,p*(h*.36)); g.fillRect(x,mid-a,1,a*2); });
+  g.globalAlpha=1;
+  // intro before beat 1
+  const xo=X(T.offset); if(xo>0){ g.fillStyle=C.sheet; g.globalAlpha=.55; g.fillRect(0,0,xo,h); g.globalAlpha=1; }
+  g.font='500 11px "DM Mono", ui-monospace, monospace'; g.textBaseline='top';
+  for(let i=0;;i++){
+    const t=T.offset+i*sp; if(t>v1) break; const x=X(t);
+    const isCount=i<COUNT_IN, first=i===COUNT_IN;
+    g.strokeStyle=isCount?C.muted:C.accent; g.lineWidth=first?2.5:(i===0?2:1.2); g.setLineDash(isCount?[3,3]:[]);
+    g.beginPath(); g.moveTo(x,18); g.lineTo(x,h); g.stroke(); g.setLineDash([]);
+    g.fillStyle=isCount?C.muted:C.accent; g.textAlign=first?'left':'center';
+    const lbl=isCount?String(COUNT_IN-i):first?'first stroke':'';
+    if(lbl) g.fillText(lbl,first?x+4:x,4);
+  }
+  { const lbl=g.measureText('intro · count-in →').width+18<xo?'intro · count-in →':g.measureText('intro →').width+14<xo?'intro →':'';
+    if(lbl){ g.fillStyle=C.muted; g.textAlign='right'; g.fillText(lbl,xo-8,4); } }
+  if(playPos!=null&&playPos>=v0&&playPos<=v1){ const x=X(playPos); g.strokeStyle=C.ink; g.lineWidth=2; g.beginPath(); g.moveTo(x,0); g.lineTo(x,h); g.stroke(); }
+}
+function stopCheck(){
+  if(!checking) return; checking=false; cancelAnimationFrame(checkRaf); clearTimeout(checkTimer);
+  stopTrack(.12); $('checkSync').textContent='Check sync'; drawWave(); metroLight(null);
+}
+function checkSync(){
+  if(!S.track) return; ensureAudio(); if(!actx) return;
+  stopCheck();
+  const T=S.track, sp=60/T.bpm, lead=Math.min(1,T.offset), t=actx.currentTime+.1, beats=8;
+  playTrack(t,T.offset-lead,0);
+  for(let i=0;i<beats;i++) metroClick(t+lead+i*sp,i%4===0,metroGain);
+  checking=true; $('checkSync').textContent='Stop check';
+  const endT=t+lead+beats*sp+.25;
+  const loop=()=>{ if(!checking) return; const now=actx.currentTime; drawWave(T.offset-lead+(now-t)); metroLight((now-t-lead)/sp); if(now<endT) checkRaf=requestAnimationFrame(loop); else stopCheck(); };
+  loop();
+}
+document.querySelectorAll('[data-src]').forEach(b=>b.addEventListener('click',()=>{ stopCheck(); S.src=b.dataset.src; applySource(); }));
+$('trackFile').addEventListener('change',e=>{ stopCheck(); loadFile(e.target.files[0]); e.target.value=''; });
+$('trackBpm').addEventListener('input',e=>{
+  const v=+e.target.value; if(!(v>0)||!isFinite(v)) return;
+  if(S.track){ S.track.bpm=v; waveCache={}; } applySource();
+});
+$('trackOffset').addEventListener('change',e=>setOffset(+e.target.value||0));
+const scaleBpm=f=>{ if(!S.track) return; const v=Math.round(S.track.bpm*f*100)/100; if(!(v>0)||!isFinite(v)) return; // no cap: ½× and 2× can be pressed as often as you like
+  S.track.bpm=v; $('trackBpm').value=fmtBpm(v); waveCache={}; $('bpmStatus').classList.remove('warn');
+  $('bpmStatus').textContent=`Set to ${fmtBpm(v)} BPM (${f>1?'double':'half'} time). Press Check sync to hear it.`; applySource(); };
+$('bpmHalf').addEventListener('click',()=>scaleBpm(.5));
+$('bpmDouble').addEventListener('click',()=>scaleBpm(2));
+$('bpmDetect').addEventListener('click',()=>{ stopCheck(); runDetect(true); });
+document.querySelectorAll('[data-nudge]').forEach(b=>b.addEventListener('click',()=>{ if(S.track) setOffset(S.track.offset+ +b.dataset.nudge); }));
+$('wave').addEventListener('click',e=>{
+  if(!S.track||S.playing) return;
+  const r=e.currentTarget.getBoundingClientRect(), T=S.track, sp=60/T.bpm;
+  const v0=Math.max(0,T.offset-1.5), v1=Math.min(T.duration,Math.max(v0+4,T.offset+sp*(COUNT_IN+8)+.5));
+  setOffset(v0+(e.clientX-r.left)/r.width*(v1-v0));
+});
+$('checkSync').addEventListener('click',()=>{ checking?stopCheck():checkSync(); });
+$('ticks').addEventListener('change',e=>{ S.ticks=e.target.checked; });
+$('metro').addEventListener('change',e=>{ S.metro=e.target.checked; document.querySelector('.metro').classList.toggle('off',!S.metro); if(!S.metro) metroLight(null); });
+$('metroVol').addEventListener('input',e=>{ S.metroVol=e.target.value/100;
+  if(actx){ if(metroGain) metroGain.gain.setTargetAtTime(S.metroVol,actx.currentTime,.02); if(flowMetro) flowMetro.gain.setTargetAtTime(S.metroVol,actx.currentTime,.02); } });
+const mp=$('musicPanel');
+mp.addEventListener('dragover',e=>{ if(S.playing) return; e.preventDefault(); mp.classList.add('drop'); });
+mp.addEventListener('dragleave',()=>mp.classList.remove('drop'));
+mp.addEventListener('drop',e=>{ e.preventDefault(); mp.classList.remove('drop'); if(S.playing) return; const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f){ stopCheck(); loadFile(f); } });
+document.querySelectorAll('.seg button[data-rest]').forEach(b=>b.addEventListener('click',()=>{
+  S.rest=+b.dataset.rest; document.querySelectorAll('.seg button[data-rest]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  timing(); buildLane(); freshModel(); syncUI(); render();
+}));
+document.querySelectorAll('.seg button[data-bps]').forEach(b=>b.addEventListener('click',()=>{
+  S.bps=+b.dataset.bps; document.querySelectorAll('.seg button[data-bps]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  timing(); buildLane(); freshModel(); syncUI(); render();
+}));
+$('tol').addEventListener('input',e=>{
+  S.tol=e.target.value/100; $('tolVal').textContent=e.target.value+'% of x-height';
+  rescoreAll(); if(!S.playing){ syncUI(); render(); }
+});
+$('showBand').addEventListener('change',e=>{S.band=e.target.checked; if(!S.playing) render();});
+$('showLabels').addEventListener('change',e=>{S.labels=e.target.checked; if(!S.playing) render();});
+function applyLevels(){ if(master) master.gain.value=S.ducked?LV()[0]*DUCK_VOL:LV()[0]; if(trackGain) trackGain.gain.value=S.ducked?LV()[1]*DUCK_VOL:LV()[1]; }
+$('sound').addEventListener('change',e=>{S.sound=e.target.checked; applyLevels();});
+$('demoBtn').addEventListener('click',()=>start('demo'));
+$('checkBtn').addEventListener('click',()=>startCheck(false));
+$('checkDone').addEventListener('click',()=>{ if(S.checking&&S.points.length) finishCheck(); });
+document.querySelectorAll('.seg button[data-gate]').forEach(b=>b.addEventListener('click',()=>{
+  S.gateSet=b.dataset.gate; document.querySelectorAll('.seg button[data-gate]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+}));
+$('gateFade').addEventListener('change',e=>{ S.fade=e.target.checked; });
+$('pracBtn').addEventListener('click',()=>start('practice'));
+let testConfirm=null;
+$('testBtn').addEventListener('click',()=>{
+  if(S.testDone||S.playing) return;
+  if(!testConfirm){ testConfirm=setTimeout(()=>{ testConfirm=null; updateModes(); },5000); updateModes(); return; }
+  clearTimeout(testConfirm); testConfirm=null; if(PILOT) startCheck(true); else start('test');
+});
+$('clearBtn').addEventListener('click',()=>{ if(S.checking&&S.testMode) return; if(S.checking){ clearAttempt(); syncUI(); render(); return; } if(S.playing){ if(S.mode==='test'){ finish(); return; } stop(); } clearAttempt(); S.lastRun=null; syncUI(); render(); });
+
+new ResizeObserver(()=>{
+  if(!stage.clientWidth) return; // hidden on the setup page
+  // re-wrap sentences when the width changes enough to move a line break (never mid-attempt)
+  const nw=wrapFor(stage.clientWidth);
+  if(!S.playing && S.strokes.length && nw!==S.wrap){
+    const before=JSON.stringify(wrapLines(S.word,S.wrap)), after=JSON.stringify(wrapLines(S.word,nw));
+    S.wrap=nw;
+    if(before!==after){ S.strokes=buildWord(S.word); layout(); buildLane(); freshModel(); syncUI(); render(); return; }
+  }
+  layout(); render(); drawWave();
+}).observe(stage);
+new ResizeObserver(()=>drawWave()).observe(mainEl);
+const refreshTheme=()=>{ readColors(); layout(); renderResults(); render(); drawWave(); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',refreshTheme);
+new MutationObserver(refreshTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-skin']});
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>render());
+
+// ---------- Light / dark toggle ----------
+const darkMQ=matchMedia('(prefers-color-scheme: dark)'), rootEl=document.documentElement;
+const isDark=()=>rootEl.dataset.theme?rootEl.dataset.theme==='dark':darkMQ.matches;
+const SUN='<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M10 1.8v2.2M10 16v2.2M1.8 10H4M16 10h2.2M4.2 4.2l1.6 1.6M14.2 14.2l1.6 1.6M4.2 15.8l1.6-1.6M14.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+const MOON='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 12.3A7 7 0 0 1 7.7 3.5a7 7 0 1 0 8.8 8.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
+function paintThemeBtn(){ const d=isDark(), b=$('themeBtn'); b.innerHTML=d?SUN:MOON; const l=d?'Switch to light mode':'Switch to dark mode'; b.setAttribute('aria-label',l); b.title=l; }
+$('themeBtn').addEventListener('click',()=>{ const t=isDark()?'light':'dark'; rootEl.dataset.theme=t; try{ localStorage.setItem('flowriter-theme',t); }catch(e){} paintThemeBtn(); });
+darkMQ.addEventListener('change',paintThemeBtn);
+paintThemeBtn();
+
+// ---------- Assignment: lesson name, lock, one test ----------
+function saveTest(){
+  S.testSnap={run:S.lastRun, res:S.strokes.map(s=>s.res), points:S.points.map(p=>({...p})), score:attemptScore(), untimed:S.attemptUntimed};
+  S.testDone=true;
+}
+function restoreTest(){
+  const snap=S.testSnap;
+  S.points=snap.points.map(p=>({...p}));
+  S.strokes.forEach((s,i)=>s.res=snap.res[i]||{status:'missed',score:0,path:0,ink:0,onTime:0,n:0});
+  S.lastRun=snap.run; S.sample=false; S.finished=true; S.attemptUntimed=!!snap.untimed;
+  const bad=S.strokes.findIndex(s=>s.res.status!=='valid'); S.selected=bad>=0?bad:0;
+}
+$('resetTest').addEventListener('click',()=>{ S.testDone=false; S.testSnap=null; syncUI(); });
+function paintLesson(){
+  const t=S.lesson.trim()||'Untitled lesson';
+  $('lessonTitle').textContent=t; $('lessonTitleR').textContent=t; document.title=t+' · Flowriter';
+}
+$('lessonName').addEventListener('input',e=>{ S.lesson=e.target.value; paintLesson(); });
+const LOCK='<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+const UNLOCK='<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 4.9-.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+function paintLock(){
+  const b=$('lockBtn');
+  document.body.classList.toggle('locked',S.locked); b.classList.toggle('on',S.locked);
+  b.innerHTML=S.locked?LOCK+'Student view · Unlock':UNLOCK+'Lock for students';
+  b.title=S.locked?'Unlock to edit the assignment again':'Hide the setup page, as students see it';
+  document.querySelectorAll('.step .sn').forEach((n,i)=>n.textContent=S.locked?i:i+1);
+}
+$('lockBtn').addEventListener('click',()=>{
+  if(S.playing) return;
+  S.locked=!S.locked; paintLock();
+  if(S.locked&&S.view==='setup') showView('write');
+});
+paintLock(); paintLesson();
+
+readColors();
+
+
+// FW-THEMES:BEGIN ---------- Writing-surface themes ----------
+// Cosmetic only: sets a data attribute. The palette is scoped to .stage in CSS,
+// and the existing attribute observer re-reads colours and re-lays-out, which
+// matters because the frame's border width changes the canvas's content box.
+const SKIN_KEY='flowriter-skin', SKIN_DEFAULT='classroom';
+function applySkin(v){
+  if(v) document.documentElement.dataset.skin=v;
+  else document.documentElement.removeAttribute('data-skin');
+  const s=$('skinSel'); if(s&&s.value!==v) s.value=v;
+  try{ localStorage.setItem(SKIN_KEY,v); }catch(e){}
+}
+$('skinSel').addEventListener('change',e=>applySkin(e.target.value));
+(()=>{ let v=SKIN_DEFAULT;
+  try{ const stored=localStorage.getItem(SKIN_KEY); if(stored!==null) v=stored; }catch(e){}
+  if(window.__FW&&window.__FW.skin!=null) v=window.__FW.skin===true?SKIN_DEFAULT:(window.__FW.skin||'');
+  if(v&&!$('skinSel').querySelector(`[value="${v}"]`)) v=SKIN_DEFAULT;
+  applySkin(v); })();
+// FW-THEMES:END
+// ---------- Host glue (the FloWriter app) ----------
+function snapshot(w0=720,q=.72){
+  // every page of the attempt, stacked, as one small JPEG for the teacher
+  try{
+    const keep=S.page, w=w0, pages=[];
+    for(let p=0;p<S.pages;p++){ S.page=p; render(); const c=document.createElement('canvas'); c.width=w; c.height=Math.round(cv.height*w/cv.width); c.getContext('2d').drawImage(cv,0,0,c.width,c.height); pages.push(c); }
+    S.page=keep; render();
+    const out=document.createElement('canvas'); out.width=w; out.height=pages.reduce((a,c)=>a+c.height,0);
+    const g=out.getContext('2d'); let y=0; pages.forEach(c=>{ g.drawImage(c,0,y); y+=c.height; });
+    return out.toDataURL('image/jpeg',q);
+  }catch(e){ return null; }
+}
+function emitRun(mode){
+  if(!PILOT) return;
+  const by=new Map();
+  S.strokes.forEach(s=>{ let e=by.get(s.ch); if(!e) by.set(s.ch,e={ch:s.ch,sum:0,n:0,rev:0}); e.sum+=s.res?s.res.score:0; e.n++; if(s.res&&s.res.status==='reversed') e.rev++; });
+  const letters=[...by.values()].map(e=>({ch:e.ch,score:Math.round(e.sum/e.n*1000)/1000,n:e.n,rev:e.rev}));
+  const valid=S.strokes.filter(s=>s.res&&s.res.status==='valid').length, reversed=S.strokes.filter(s=>s.res&&s.res.status==='reversed').length;
+  emit({type:'run',mode:mode==='check'?'test':mode,score:mode==='demo'?null:Math.round(attemptScore()*1000)/1000,valid,total:S.strokes.length,reversed,
+    gate:mode==='practice'?S.gate:null,bpm:mode==='test'||mode==='check'?null:S.bpm,pauses:S.pauses,letters,img:mode==='demo'?null:mode==='practice'?snapshot(420,.6):snapshot()});
+}
+async function hostTrack(m){
+  ensureAudio();
+  if(!actx){ emit({type:'trackFail'}); return; }
+  try{
+    const ab=await m.track.arrayBuffer();
+    const buf=await new Promise((res,rej)=>{ const p=actx.decodeAudioData(ab,res,rej); if(p&&p.then) p.then(res,rej); });
+    S.track={buf,name:m.name||m.track.name||'Song',bpm:+m.bpm||100,baseBpm:+m.baseBpm||+m.bpm||100,offset:0,duration:buf.duration};
+    waveCache={}; S.src='track';
+    if(m.offset!=null) setOffset(+m.offset,true); else setOffset(detectFirstBeat(buf),true);
+    if(!m.bpm) await runDetect(false);
+    applySource(); timing(); buildLane(); syncUI(); render();
+    emit({type:'trackReady',bpm:S.track.bpm});
+  }catch(e){ S.track=null; S.src='synth'; applySource(); emit({type:'trackFail'}); }
+}
+function applyHost(){
+  const c=HOST; document.body.classList.add('pilot', 'role-'+(c.role||'student'));
+  if(c.theme) document.documentElement.dataset.theme=c.theme;
+  if(c.title){ S.lesson=c.title; paintLesson(); }
+  if(c.tol){ S.tol=c.tol/100; $('tol').value=c.tol; $('tolVal').textContent=c.tol+'% of x-height'; }
+  if(c.bps){ S.bps=+c.bps; document.querySelectorAll('.seg button[data-bps]').forEach(x=>x.setAttribute('aria-pressed',String(+x.dataset.bps===S.bps))); }
+  if(c.rest!=null){ S.rest=+c.rest; document.querySelectorAll('.seg button[data-rest]').forEach(x=>x.setAttribute('aria-pressed',String(+x.dataset.rest===S.rest))); }
+  if(c.bpm){ const v=Math.max(1,+c.bpm); const r=$('bpm'); r.value=v; S.bpm=v; $('bpmVal').textContent=fmtBpm(v)+' BPM'; }
+  S.locked=true; paintLock();
+  applySkin(c.skin||'');
+  if(c.checkOnly) document.body.classList.add('check-only');
+  S.left=c.handed==='left';
+  // sound: music on/off, metronome on/off, volume. Remembered on this device.
+  try{ const v=JSON.parse(localStorage.getItem('flowriter-sound')||'null'); if(v){ S.sound=v.sound!==false; S.metro=v.metro!==false; S.vol=Math.max(0,Math.min(1,+v.vol||1)); } }catch(e){}
+  if(!c.checkOnly){
+    const bar=document.querySelector('.write-bar'), box=document.createElement('div'); box.className='sound-ctl'; box.setAttribute('role','group'); box.setAttribute('aria-label','Sound');
+    box.innerHTML=`<button type="button" id="sndMusic" aria-pressed="${S.sound}">♪ Music</button><button type="button" id="sndClick" aria-pressed="${S.metro}">Click</button><label style="display:inline-flex;gap:6px;align-items:center;font-weight:700;font-size:14px">Volume <input type="range" id="sndVol" min="0" max="100" value="${Math.round(S.vol*100)}" aria-label="Volume"></label>`;
+    bar.insertBefore(box,$('clearBtn'));
+    const save=()=>{ try{ localStorage.setItem('flowriter-sound',JSON.stringify({sound:S.sound,metro:S.metro,vol:S.vol})); }catch(e){} };
+    $('sndMusic').addEventListener('click',e=>{ S.sound=!S.sound; e.currentTarget.setAttribute('aria-pressed',S.sound); $('sound').checked=S.sound; applyLevels(); save(); });
+    $('sndClick').addEventListener('click',e=>{ S.metro=!S.metro; e.currentTarget.setAttribute('aria-pressed',S.metro); $('metro').checked=S.metro; if(flowMetro&&actx) flowMetro.gain.setTargetAtTime(S.metro?S.metroVol:0,actx.currentTime,.02); save(); });
+    $('sndVol').addEventListener('input',e=>{ S.vol=e.target.value/100; applyLevels(); save(); });
+    $('sound').checked=S.sound; $('metro').checked=S.metro;
+  }
+  setWord(c.word||'hello'); // resets any test state, so progress goes on after it
+  const pr=c.progress||{};
+  if(pr.demo) S.demoWatched=true;
+  if(pr.practice) S.practiceRuns=+pr.practice;
+  if(pr.test&&c.role!=='preview'){ S.testDone=true; S.testSnap=null; }
+  applySource(); showView('write');
+  addEventListener('message',e=>{
+    const m=e.data||{}; if(!m.fwShell) return;
+    if(m.theme) document.documentElement.dataset.theme=m.theme;
+    if(m.track) hostTrack(m);
+  });
+  const sendH=()=>emit({type:'h',h:Math.ceil(document.documentElement.scrollHeight)});
+  new ResizeObserver(sendH).observe(document.body); sendH();
+  ['setup','write','results'].forEach(v=>{ const el=$('view-'+v); el&&new MutationObserver(()=>{ if(!el.hidden) emit({type:'view',v}); sendH(); }).observe(el,{attributes:true,attributeFilter:['hidden']}); });
+  let lastPing=0;
+  cv.addEventListener('pointermove',()=>{ const n=Date.now(); if(n-lastPing>5000){ lastPing=n; emit({type:'active'}); } });
+  if(c.debug) window.__fw={S,X:u=>X(u),Y:v=>Y(v),attemptScore,loopRegion,wrapPos,get scale(){return scale;},get H(){return H;},startCheck,finishCheck};
+  emit({type:'ready'});
+}
+if(PILOT) applyHost();
+else { setWord('hello'); applySource(); }
+})();
+</script>
+</body>
+</html>

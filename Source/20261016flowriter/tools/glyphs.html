@@ -1,0 +1,74 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Glyph sheet</title>
+<style>body{margin:0;background:#fff;font:13px system-ui}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script src="../src/letters.js"></script>
+<script>
+// Mirrors the engine's geometry (buildWord / crSeg / resample) so the sheet shows exactly what students trace.
+const SLANT=0.3, SPACE=.9;
+const dist=(a,b)=>Math.hypot(b[0]-a[0],b[1]-a[1]);
+function crSeg(p0,p1,p2,p3,n,out,skipFirst){
+  const d=(a,b)=>Math.max(1e-4,Math.sqrt(dist(a,b)));
+  const t0=0,t1=t0+d(p0,p1),t2=t1+d(p1,p2),t3=t2+d(p2,p3);
+  const L=(a,b,ta,tb,t)=>[(tb-t)/(tb-ta)*a[0]+(t-ta)/(tb-ta)*b[0],(tb-t)/(tb-ta)*a[1]+(t-ta)/(tb-ta)*b[1]];
+  for(let i=skipFirst?1:0;i<=n;i++){ const t=t1+(t2-t1)*i/n;
+    const A1=L(p0,p1,t0,t1,t),A2=L(p1,p2,t1,t2,t),A3=L(p2,p3,t2,t3,t),B1=L(A1,A2,t0,t2,t),B2=L(A2,A3,t1,t3,t); out.push(L(B1,B2,t1,t2,t)); }
+}
+function build(text){
+  const strokes=[]; let x=0;
+  text.split(' ').forEach(word=>{
+    let prevEy=.1, prevJoin=false; const lifts=[];
+    [...word].forEach((ch,ci)=>{
+      const L=LETTERS[ch]; if(!L) return; const startLift=!prevJoin||!!L.cap||!!L.punct;
+      L.s.forEach((s,si)=>{
+        const ctrl=s.p.map(p=>[p[0],p[1]]);
+        if(si===0&&!startLift){ ctrl[0]=[0,prevEy]; if(prevEy>.5){ let e=1; while(e<ctrl.length-1&&ctrl[e][1]<.55) e++; ctrl.splice(1,e-1); } }
+        const lift=si===0?startLift:!!s.lift, defer=!!s.lift&&!L.cap&&!L.punct;
+        const st={ch,si,name:s.n,j:lift?false:(si===0?true:!!s.j),lift,ctrl:ctrl.map(p=>[p[0]+x,p[1]])};
+        (defer?lifts:strokes).push(st);
+      });
+      x+=L.w; prevEy=L.ey??.1; prevJoin=!L.nj&&!L.punct;
+    });
+    strokes.push(...lifts); x+=SPACE;
+  });
+  const refl=(a,b)=>[2*a[0]-b[0],2*a[1]-b[1]];
+  strokes.forEach((s,k)=>{ const P=s.ctrl,n=P.length;
+    const before=s.j&&k>0?strokes[k-1].ctrl[strokes[k-1].ctrl.length-2]:refl(P[0],P[1]);
+    const nx=strokes[k+1]; const after=nx&&nx.j?nx.ctrl[1]:refl(P[n-1],P[n-2]);
+    const ext=[before,...P,after], raw=[];
+    for(let i=1;i<ext.length-2;i++) crSeg(ext[i-1],ext[i],ext[i+1],ext[i+2],18,raw,i>1);
+    s.pts=raw.map(p=>[p[0]+p[1]*SLANT,p[1]]); });
+  return {strokes,w:x-SPACE};
+}
+const COLS=['#1f6feb','#e8590c','#2f9e44','#ae3ec9','#c92a2a','#0c8599','#5c940d'];
+const q=new URLSearchParams(location.search);
+const rows=(q.get('rows')||'abcdefghi|jklmnopqr|stuvwxyz').split('|');
+const S=+(q.get('s')||70), cols=+(q.get('cols')||0);
+const cv=document.getElementById('c'), g=cv.getContext('2d');
+const items=rows.map(r=>q.get('words')?r.split(','):[...r]);
+const cellW=S*2.6, rowH=S*4.4, W=Math.max(...items.map(r=>r.reduce((a,t)=>a+Math.max(cellW,(build(t).w+1.2)*S),0)))+40;
+cv.width=W; cv.height=items.length*rowH+20;
+g.fillStyle='#fff'; g.fillRect(0,0,cv.width,cv.height);
+items.forEach((row,ri)=>{
+  const base=ri*rowH+S*2.7+10;
+  [[2.2,'#9bb'],[1,'#bcd',[6,6]],[0,'#78a'],[-1,'#dde']].forEach(([v,c,d])=>{g.setLineDash(d||[]);g.strokeStyle=c;g.lineWidth=1;g.beginPath();g.moveTo(0,base-v*S);g.lineTo(W,base-v*S);g.stroke();});
+  g.setLineDash([]);
+  let x0=20;
+  row.forEach(t=>{
+    const {strokes,w}=build(t);
+    const X=u=>x0+u*S, Y=v=>base-v*S;
+    strokes.forEach((s,i)=>{
+      const c=COLS[i%COLS.length]; g.strokeStyle=c; g.lineWidth=3; g.lineCap='round'; g.lineJoin='round';
+      g.beginPath(); s.pts.forEach((p,j)=>j?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1]))); g.stroke();
+      const a=s.pts[0]; g.fillStyle=c; g.beginPath(); g.arc(X(a[0]),Y(a[1]),4,0,7); g.fill();
+      const m=Math.floor(s.pts.length*.55), m2=Math.min(s.pts.length-1,m+2), P=s.pts[m], Q=s.pts[m2];
+      const ang=Math.atan2(Y(Q[1])-Y(P[1]),X(Q[0])-X(P[0])), ax=X(Q[0]), ay=Y(Q[1]);
+      g.beginPath(); g.moveTo(ax+Math.cos(ang)*8,ay+Math.sin(ang)*8); g.lineTo(ax+Math.cos(ang+2.5)*7,ay+Math.sin(ang+2.5)*7); g.lineTo(ax+Math.cos(ang-2.5)*7,ay+Math.sin(ang-2.5)*7); g.fill();
+      g.font='10px system-ui'; g.fillText(String(i+1),X(a[0])+5,Y(a[1])+12);
+    });
+    g.fillStyle='#888'; g.font='12px system-ui'; g.fillText(t,x0,base+S*1.35);
+    x0+=Math.max(cellW,(w+1.2)*S);
+  });
+});
+document.title='done';
+</script></body></html>
